@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blacksmith's Forge - Craft & Trade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <h1>🔨 Blacksmith's Forge</h1>
+            <div class="player-stats">
+                <div class="stat">
+                    <span class="stat-label">Gold:</span>
+                    <span id="player-gold" class="stat-value">100</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Reputation:</span>
+                    <span id="player-reputation" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Level:</span>
+                    <span id="player-level" class="stat-value">1</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="game-nav">
+            <button class="nav-btn active" data-tab="forge">🔥 Forge</button>
+            <button class="nav-btn" data-tab="recipes">📖 Recipes</button>
+            <button class="nav-btn" data-tab="materials">⚒️ Materials</button>
+            <button class="nav-btn" data-tab="customers">👥 Customers</button>
+            <button class="nav-btn" data-tab="upgrades">⬆️ Upgrades</button>
+        </nav>
+
+        <!-- Game Content Tabs -->
+        <main class="game-content">
+            <!-- Forge Tab -->
+            <section id="forge-tab" class="tab-content active">
+                <div class="forge-area">
+                    <div class="forge-main">
+                        <h2>🔥 Forge</h2>
+                        <div class="forge-fire" id="forge-fire">
+                            <div class="fire-animation">🔥</div>
+                            <p>Click to light the forge!</p>
+                        </div>
+                        
+                        <div class="crafting-area hidden" id="crafting-area">
+                            <h3>Select Recipe to Craft</h3>
+                            <div class="recipe-selector" id="recipe-selector"></div>
+                            
+                            <div class="crafting-interface hidden" id="crafting-interface">
+                                <div class="recipe-details">
+                                    <h4 id="selected-recipe-name">Recipe Name</h4>
+                                    <div class="required-materials" id="required-materials"></div>
+                                    <div class="crafting-cost">
+                                        <span>Total Cost: </span>
+                                        <span id="crafting-cost">0</span> gold
+                                    </div>
+                                </div>
+                                
+                                <div class="crafting-mini-game">
+                                    <div class="hammering-game hidden" id="hammering-game">
+                                        <h4>Perfect the Timing!</h4>
+                                        <div class="hammer-bar">
+                                            <div class="hammer-target" id="hammer-target"></div>
+                                            <div class="hammer-cursor" id="hammer-cursor"></div>
+                                        </div>
+                                        <button class="btn btn--primary" id="hammer-btn">⚒️ HAMMER!</button>
+                                        <div class="hammer-score">Accuracy: <span id="hammer-accuracy">0</span>%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="crafting-actions">
+                                    <button class="btn btn--primary" id="start-crafting">Start Crafting</button>
+                                    <button class="btn btn--secondary" id="cancel-crafting">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="inventory-panel">
+                        <h3>📦 Inventory</h3>
+                        <div class="inventory-grid" id="inventory-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recipes Tab -->
+            <section id="recipes-tab" class="tab-content">
+                <div class="recipes-container">
+                    <h2>📖 Recipe Book</h2>
+                    <div class="recipes-grid" id="recipes-grid"></div>
+                </div>
+            </section>
+
+            <!-- Materials Tab -->
+            <section id="materials-tab" class="tab-content">
+                <div class="materials-container">
+                    <h2>⚒️ Material Market</h2>
+                    <div class="materials-grid" id="materials-grid"></div>
+                </div>
+            </section>
+
+            <!-- Customers Tab -->
+            <section id="customers-tab" class="tab-content">
+                <div class="customers-container">
+                    <h2>👥 Customer Orders</h2>
+                    <div class="active-customer" id="active-customer">
+                        <p>No customers waiting. Check back later!</p>
+                    </div>
+                    <div class="customers-list" id="customers-list"></div>
+                </div>
+            </section>
+
+            <!-- Upgrades Tab -->
+            <section id="upgrades-tab" class="tab-content">
+                <div class="upgrades-container">
+                    <h2>⬆️ Forge Upgrades</h2>
+                    <div class="upgrades-grid" id="upgrades-grid"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div class="modal hidden" id="tutorial-modal">
+            <div class="modal-content">
+                <h2>Welcome to the Forge!</h2>
+                <div class="tutorial-content" id="tutorial-content">
+                    <p>Welcome, aspiring blacksmith! Let me show you the basics of running your forge.</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn--primary" id="tutorial-next">Next</button>
+                    <button class="btn btn--secondary" id="tutorial-skip">Skip Tutorial</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal hidden" id="crafting-result-modal">
+            <div class="modal-content">
+                <h2>Crafting Complete!</h2>
+                <div class="result-content" id="result-content"></div>
+                <button class="btn btn--primary" id="close-result">Continue</button>
+            </div>
+        </div>
+
+        <div class="modal hidden" id="sale-modal">
+            <div class="modal-content">
+                <h2>💰 Sale Complete!</h2>
+                <div class="sale-content" id="sale-content"></div>
+                <button class="btn btn--primary" id="close-sale">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
