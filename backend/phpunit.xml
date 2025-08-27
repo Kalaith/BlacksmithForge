@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    
+    <testsuites>
+        <testsuite name="Route Tests">
+            <directory>tests/Routes</directory>
+        </testsuite>
+    </testsuites>
+    
+    <coverage>
+        <exclude>
+            <directory suffix=".php">tests</directory>
+            <directory suffix=".php">vendor</directory>
+        </exclude>
+    </coverage>
+    
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_HOST" value="localhost"/>
+        <env name="DB_NAME" value="dragons_den"/>
+        <env name="DB_USER" value="root"/>
+        <env name="DB_PASSWORD" value="c$t@Q5N^QRi8aa"/>
+    </php>
+</phpunit>

@@ -1,0 +1,66 @@
+
+# Composer dependencies
+# Coverage directory used by tools like istanbul
+# Database
+# Dependencies
+# Environment variables
+# IDE files
+# Logs
+# OS generated files
+# Package-lock files (uncomment if you want to include them)
+# package-lock.json
+# PHP Backend
+# PHP configuration
+# PHP logs and cache
+# PHP Storm
+# PHP temp files
+# PHPUnit
+# Production builds
+# Runtime data
+# yarn.lock
+*.db
+*.lcov
+*.log
+*.pid
+*.pid.lock
+*.seed
+*.sqlite
+*.swo
+*.swp
+*.temp
+*.tmp
+._*
+.DS_Store
+.DS_Store?
+.env
+.env.development.local
+.env.local
+.env.production.local
+.env.test.local
+.idea/
+.phpstorm.meta.php
+.pnp.js
+.Spotlight-V100
+.Trashes
+.vscode/
+/.pnp
+/build
+/dist
+backend/.env
+backend/.phpunit.result.cache
+backend/cache/
+backend/config/local.php
+backend/coverage/
+backend/storage/logs/
+backend/vendor/
+composer.phar
+coverage/
+ehthumbs.db
+lerna-debug.log*
+mcp
+node_modules/
+npm-debug.log*
+pids
+Thumbs.db
+yarn-debug.log*
+yarn-error.log*
