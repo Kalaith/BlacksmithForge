@@ -1,8 +1,8 @@
 <?php
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Http\Response;
+use App\Http\Request;
 use App\Actions\CraftingActions;
 
 class CraftingController {
@@ -12,7 +12,7 @@ class CraftingController {
      */
     public function startCrafting(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $recipeId = $data['recipe_id'] ?? null;
         
         if (!$userId || !$recipeId) {
@@ -33,7 +33,7 @@ class CraftingController {
      */
     public function processHammerHit(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $craftingSessionId = $data['crafting_session_id'] ?? null;
         $accuracy = $data['accuracy'] ?? 0;
         
@@ -55,7 +55,7 @@ class CraftingController {
      */
     public function completeCrafting(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $craftingSessionId = $data['crafting_session_id'] ?? null;
         $totalAccuracy = $data['total_accuracy'] ?? 0;
         
@@ -76,7 +76,7 @@ class CraftingController {
      * Validate if user can craft a recipe
      */
     public function validateCrafting(Request $request, Response $response, $args) {
-        $userId = $args['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $recipeId = $args['recipe_id'] ?? null;
         
         if (!$userId || !$recipeId) {
@@ -96,7 +96,7 @@ class CraftingController {
      * Get crafting session status
      */
     public function getCraftingSession(Request $request, Response $response, $args) {
-        $userId = $args['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $craftingSessionId = $args['crafting_session_id'] ?? null;
         
         if (!$userId || !$craftingSessionId) {
@@ -117,7 +117,7 @@ class CraftingController {
      */
     public function craft(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $recipeId = $data['recipe_id'] ?? null;
         $materialsUsed = $data['materials_used'] ?? [];
         
@@ -130,7 +130,7 @@ class CraftingController {
      * Get crafting history for a user
      */
     public function history(Request $request, Response $response, $args) {
-        $userId = $args['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
             $result = [
@@ -143,5 +143,11 @@ class CraftingController {
         
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    private function getAuthUserId(Request $request): ?int
+    {
+        $authUser = $request->getAttribute('auth_user');
+        return isset($authUser['id']) ? (int) $authUser['id'] : null;
     }
 }

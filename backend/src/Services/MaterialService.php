@@ -4,16 +4,27 @@ namespace App\Services;
 
 use App\Models\Material;
 use App\Repositories\MaterialRepository;
+use App\Repositories\InventoryRepository;
+use App\Repositories\BlacksmithProfileRepository;
 use Psr\Log\LoggerInterface;
 
 class MaterialService
 {
     private MaterialRepository $repository;
+    private InventoryRepository $inventoryRepository;
+    private BlacksmithProfileRepository $profileRepository;
     private LoggerInterface $logger;
 
-    public function __construct(MaterialRepository $repository, LoggerInterface $logger)
+    public function __construct(
+        MaterialRepository $repository,
+        InventoryRepository $inventoryRepository,
+        BlacksmithProfileRepository $profileRepository,
+        LoggerInterface $logger
+    )
     {
         $this->repository = $repository;
+        $this->inventoryRepository = $inventoryRepository;
+        $this->profileRepository = $profileRepository;
         $this->logger = $logger;
     }
 
@@ -178,7 +189,7 @@ class MaterialService
     public function getUserMaterials(int $userId): array
     {
         try {
-            return $this->repository->getUserMaterials($userId);
+            return $this->inventoryRepository->getUserMaterials($userId);
         } catch (\Exception $e) {
             $this->logger->error("Failed to get user materials for user {$userId}: " . $e->getMessage());
             throw new \RuntimeException('Failed to retrieve user materials');
@@ -205,10 +216,15 @@ class MaterialService
             }
 
             // Calculate total cost
-            $totalCost = $material->cost * $quantity;
+            $unitCost = $material->properties['cost'] ?? 10;
+            $totalCost = $unitCost * $quantity;
 
             // Get user's current gold (you'll need to implement this in AuthRepository/UserRepository)
-            $userGold = $this->repository->getUserGold($userId);
+            $profile = $this->profileRepository->findByUserId($userId);
+            if (!$profile) {
+                $profile = $this->profileRepository->createDefaultProfile($userId, 'New Forge');
+            }
+            $userGold = $profile->coins ?? 0;
             if ($userGold < $totalCost) {
                 return [
                     'success' => false,
@@ -219,9 +235,12 @@ class MaterialService
             }
 
             // Process the purchase (atomic transaction)
-            $result = $this->repository->purchaseMaterial($userId, $materialId, $quantity, $totalCost);
+            $result = $this->inventoryRepository->addMaterialToUser($userId, $material->name, $quantity);
             
             if ($result) {
+                $this->profileRepository->updateByUserId($userId, [
+                    'coins' => $userGold - $totalCost
+                ]);
                 $this->logger->info("User {$userId} purchased {$quantity} of material {$materialId} for {$totalCost} gold");
                 
                 return [
@@ -254,7 +273,11 @@ class MaterialService
         }
 
         try {
-            $success = $this->repository->addMaterialToUser($userId, $materialId, $quantity);
+            $material = $this->getMaterialById($materialId);
+            if (!$material) {
+                throw new \RuntimeException('Material not found');
+            }
+            $success = $this->inventoryRepository->addMaterialToUser($userId, $material->name, $quantity);
             
             if ($success) {
                 $this->logger->info("Added {$quantity} of material {$materialId} to user {$userId}");
@@ -284,7 +307,7 @@ class MaterialService
             }
 
             // Consume the materials
-            $success = $this->repository->consumeMaterials($userId, $materials);
+            $success = $this->inventoryRepository->consumeMaterials($userId, $materials);
             
             if ($success) {
                 $this->logger->info("Consumed materials for user {$userId}: " . json_encode($materials));

@@ -185,12 +185,14 @@ class CraftingService
             $finalValue = (int) floor($baseValue * $qualityMultiplier);
 
             // Create the crafted item
+            $stats = $this->calculateItemStats($recipe, $quality);
             $craftedItem = [
                 'name' => $recipe['name'],
-                'type' => 'weapon',
+                'type' => $stats['type'],
                 'quality' => $quality,
                 'value' => $finalValue,
-                'icon' => $recipe['icon'] ?? '⚒️',
+                'icon' => $recipe['icon'] ?? 'âš’ï¸',
+                'stats' => $stats['values'],
                 'crafted_at' => date('Y-m-d H:i:s'),
                 'recipe_id' => $recipe['id']
             ];
@@ -222,6 +224,7 @@ class CraftingService
                 'success' => true,
                 'quality' => $quality,
                 'item' => $craftedItem,
+                'message' => "{$quality} quality item crafted!",
                 'accuracy_achieved' => $totalAccuracy,
                 'value_earned' => $finalValue,
                 'session_id' => $sessionId
@@ -358,6 +361,47 @@ class CraftingService
         } else {
             return 'Poor';
         }
+    }
+
+    /**
+     * Derive item stats based on recipe and quality.
+     */
+    private function calculateItemStats(array $recipe, string $quality): array
+    {
+        $difficulty = $recipe['difficulty'] ?? 'easy';
+        $resultItem = strtolower($recipe['result_item'] ?? '');
+
+        $baseByDifficulty = [
+            'easy' => 10,
+            'medium' => 20,
+            'hard' => 35,
+            'expert' => 60
+        ];
+
+        $base = $baseByDifficulty[$difficulty] ?? 10;
+        $multiplier = self::QUALITY_MULTIPLIERS[$quality] ?? 1.0;
+
+        $type = 'tool';
+        $stats = [];
+
+        if (str_contains($resultItem, 'sword') || str_contains($resultItem, 'dagger') || str_contains($resultItem, 'axe') || str_contains($resultItem, 'mace')) {
+            $type = 'weapon';
+            $stats['attack'] = (int) floor($base * $multiplier);
+            $stats['durability'] = (int) floor(($base + 20) * $multiplier);
+        } elseif (str_contains($resultItem, 'shield') || str_contains($resultItem, 'armor') || str_contains($resultItem, 'helmet') || str_contains($resultItem, 'chest')) {
+            $type = 'armor';
+            $stats['defense'] = (int) floor($base * $multiplier);
+            $stats['durability'] = (int) floor(($base + 25) * $multiplier);
+        } else {
+            $type = 'tool';
+            $stats['speed'] = (int) floor($base * $multiplier);
+            $stats['durability'] = (int) floor(($base + 15) * $multiplier);
+        }
+
+        return [
+            'type' => $type,
+            'values' => $stats
+        ];
     }
 
     /**

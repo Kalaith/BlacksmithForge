@@ -1,8 +1,8 @@
 <?php
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Http\Response;
+use App\Http\Request;
 use App\Actions\CustomerActions;
 
 class CustomerController {
@@ -30,7 +30,7 @@ class CustomerController {
      * Get current customer for a user
      */
     public function getCurrentCustomer(Request $request, Response $response, $args) {
-        $userId = $args['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
             $result = [
@@ -50,7 +50,7 @@ class CustomerController {
      */
     public function generateCustomer(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
             $result = [
@@ -70,7 +70,7 @@ class CustomerController {
      */
     public function sellItem(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $itemId = $data['item_id'] ?? null;
         $customerId = $data['customer_id'] ?? null;
         
@@ -91,7 +91,7 @@ class CustomerController {
      * Get selling price for an item
      */
     public function getSellingPrice(Request $request, Response $response, $args) {
-        $userId = $args['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         $itemId = $args['item_id'] ?? null;
         $customerId = $args['customer_id'] ?? null;
         
@@ -113,7 +113,7 @@ class CustomerController {
      */
     public function dismissCustomer(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $userId = $data['user_id'] ?? null;
+        $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
             $result = [
@@ -126,6 +126,12 @@ class CustomerController {
         
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    private function getAuthUserId(Request $request): ?int
+    {
+        $authUser = $request->getAttribute('auth_user');
+        return isset($authUser['id']) ? (int) $authUser['id'] : null;
     }
     
     // Legacy methods

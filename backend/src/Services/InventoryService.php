@@ -22,7 +22,7 @@ class InventoryService
     public function getUserInventory(int $userId): array
     {
         try {
-            return $this->repository->findBy(['user_id' => $userId]);
+            return $this->repository->getUserInventory($userId);
         } catch (\Exception $e) {
             $this->logger->error("Failed to get inventory for user {$userId}: " . $e->getMessage());
             throw new \RuntimeException('Failed to retrieve inventory');

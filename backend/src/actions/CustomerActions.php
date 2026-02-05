@@ -2,7 +2,7 @@
 namespace App\Actions;
 
 use App\Services\CustomerService;
-use App\Services\InventoryService;
+use App\Utils\ContainerConfig;
 
 class CustomerActions {
     
@@ -11,7 +11,7 @@ class CustomerActions {
      */
     public static function getAll() {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $customers = $customerService->getAllCustomers();
             
             return [
@@ -32,7 +32,7 @@ class CustomerActions {
      */
     public static function get($id) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $customer = $customerService->getCustomerById($id);
             
             return [
@@ -52,7 +52,7 @@ class CustomerActions {
      */
     public static function getCurrentCustomer($userId) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $customer = $customerService->getCurrentCustomerForUser($userId);
             
             return [
@@ -72,7 +72,7 @@ class CustomerActions {
      */
     public static function generateCustomer($userId) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $customer = $customerService->generateCustomerForUser($userId);
             
             return [
@@ -93,7 +93,7 @@ class CustomerActions {
      */
     public static function sellItem($userId, $itemId, $customerId) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $result = $customerService->sellItemToCustomer($userId, $itemId, $customerId);
             
             return [
@@ -114,7 +114,7 @@ class CustomerActions {
      */
     public static function getSellingPrice($userId, $itemId, $customerId) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $priceInfo = $customerService->calculateSellingPrice($userId, $itemId, $customerId);
             
             return [
@@ -134,7 +134,7 @@ class CustomerActions {
      */
     public static function dismissCustomer($userId) {
         try {
-            $customerService = new CustomerService();
+            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
             $customerService->dismissCurrentCustomer($userId);
             
             return [

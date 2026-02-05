@@ -10,6 +10,7 @@ use App\Repositories\RecipeRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\InventoryRepository;
 use App\Repositories\AuthRepository;
+use App\Repositories\BlacksmithProfileRepository;
 use App\Repositories\CraftingRepository;
 use App\Repositories\UpgradeRepository;
 use App\Repositories\MiniGameRepository;
@@ -68,6 +69,10 @@ class ContainerConfig
             AuthRepository::class => function (\PDO $pdo) {
                 return new AuthRepository($pdo);
             },
+
+            BlacksmithProfileRepository::class => function (\PDO $pdo) {
+                return new BlacksmithProfileRepository($pdo);
+            },
             
             CraftingRepository::class => function (\PDO $pdo) {
                 return new CraftingRepository($pdo);
@@ -82,16 +87,26 @@ class ContainerConfig
             },
             
             // Services
-            MaterialService::class => function (MaterialRepository $repo, LoggerInterface $logger) {
-                return new MaterialService($repo, $logger);
+            MaterialService::class => function (
+                MaterialRepository $repo,
+                InventoryRepository $inventoryRepo,
+                BlacksmithProfileRepository $profileRepo,
+                LoggerInterface $logger
+            ) {
+                return new MaterialService($repo, $inventoryRepo, $profileRepo, $logger);
             },
             
             RecipeService::class => function (RecipeRepository $repo, MaterialRepository $materialRepo, LoggerInterface $logger) {
                 return new RecipeService($repo, $materialRepo, $logger);
             },
             
-            CustomerService::class => function (CustomerRepository $repo, LoggerInterface $logger) {
-                return new CustomerService($repo, $logger);
+            CustomerService::class => function (
+                CustomerRepository $repo,
+                InventoryRepository $inventoryRepo,
+                AuthRepository $authRepo,
+                LoggerInterface $logger
+            ) {
+                return new CustomerService($repo, $inventoryRepo, $authRepo, $logger);
             },
             
             InventoryService::class => function (InventoryRepository $repo, MaterialRepository $materialRepo, LoggerInterface $logger) {

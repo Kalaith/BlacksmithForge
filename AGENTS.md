@@ -1,0 +1,1 @@
+keep a running CHANGELOG of all major changes, with a date

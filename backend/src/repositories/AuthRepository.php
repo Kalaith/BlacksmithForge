@@ -11,6 +11,8 @@ class AuthRepository extends BaseRepository
     protected $fillable = [
         'username',
         'password',
+        'email',
+        'auth_provider',
     ];
 
     public function __construct(PDO $pdo)
@@ -26,6 +28,7 @@ class AuthRepository extends BaseRepository
         $data = [
             'username' => $user->username,
             'password' => $user->password,
+            'email' => $user->email ?? null,
         ];
 
         return $this->create($data);
@@ -47,6 +50,45 @@ class AuthRepository extends BaseRepository
     {
         $result = $this->find($id);
         return $result ? $this->mapToModel($result) : null;
+    }
+
+    /**
+     * Find user by ID and return array
+     */
+    public function findById(int $id): ?array
+    {
+        return $this->find($id);
+    }
+
+    /**
+     * Upsert a WebHatchery user based on JWT claims
+     */
+    public function upsertWebHatcheryUser(int $id, ?string $email, string $username): array
+    {
+        $sql = "INSERT INTO {$this->table} (id, email, username, password, auth_provider)
+                VALUES (:id, :email, :username, :password, :auth_provider)
+                ON DUPLICATE KEY UPDATE
+                    email = VALUES(email),
+                    username = VALUES(username),
+                    auth_provider = VALUES(auth_provider),
+                    updated_at = CURRENT_TIMESTAMP";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':id' => $id,
+            ':email' => $email ?? '',
+            ':username' => $username,
+            ':password' => null,
+            ':auth_provider' => 'webhatchery',
+        ]);
+
+        $user = $this->find($id);
+        return $user ?: [
+            'id' => $id,
+            'email' => $email ?? '',
+            'username' => $username,
+            'auth_provider' => 'webhatchery',
+        ];
     }
 
     /**

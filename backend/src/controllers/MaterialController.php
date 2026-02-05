@@ -3,8 +3,8 @@
 namespace App\Controllers;
 
 use App\Services\MaterialService;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Http\Response;
+use App\Http\Request;
 
 class MaterialController
 {
@@ -193,9 +193,9 @@ class MaterialController
     public function getUserMaterials(Request $request, Response $response, array $args): Response
     {
         try {
-            $userId = (int) ($args['userId'] ?? 0);
+            $userId = $this->getAuthUserId($request);
             
-            if ($userId <= 0) {
+            if (!$userId) {
                 return $this->errorResponse($response, 'Invalid user ID', 400);
             }
 
@@ -221,11 +221,11 @@ class MaterialController
                 return $this->errorResponse($response, 'Invalid request data', 400);
             }
 
-            $userId = (int) ($data['user_id'] ?? 0);
+            $userId = $this->getAuthUserId($request);
             $materialId = (int) ($data['material_id'] ?? 0);
             $quantity = (int) ($data['quantity'] ?? 0);
             
-            if ($userId <= 0 || $materialId <= 0 || $quantity <= 0) {
+            if (!$userId || $materialId <= 0 || $quantity <= 0) {
                 return $this->errorResponse($response, 'Invalid user ID, material ID, or quantity', 400);
             }
 
@@ -265,5 +265,11 @@ class MaterialController
         ];
         
         return $this->jsonResponse($response, $data, $status);
+    }
+
+    private function getAuthUserId(Request $request): ?int
+    {
+        $authUser = $request->getAttribute('auth_user');
+        return isset($authUser['id']) ? (int) $authUser['id'] : null;
     }
 }

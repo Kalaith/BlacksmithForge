@@ -7,6 +7,8 @@ class User
     public ?int $id;
     public string $username;
     public string $password;
+    public string $email;
+    public ?string $auth_provider;
     public ?\DateTime $created_at;
     public ?\DateTime $updated_at;
 
@@ -15,6 +17,8 @@ class User
         $this->id = $data['id'] ?? null;
         $this->username = $data['username'] ?? '';
         $this->password = $data['password'] ?? '';
+        $this->email = $data['email'] ?? '';
+        $this->auth_provider = $data['auth_provider'] ?? null;
         $this->created_at = isset($data['created_at']) ? new \DateTime($data['created_at']) : null;
         $this->updated_at = isset($data['updated_at']) ? new \DateTime($data['updated_at']) : null;
     }
@@ -24,6 +28,8 @@ class User
         return [
             'id' => $this->id,
             'username' => $this->username,
+            'email' => $this->email,
+            'auth_provider' => $this->auth_provider,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

@@ -4,10 +4,29 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NULL,
+    auth_provider VARCHAR(50) DEFAULT 'webhatchery',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Blacksmith profiles table (game-specific user data)
+CREATE TABLE IF NOT EXISTS blacksmith_profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    forge_name VARCHAR(255) DEFAULT 'New Forge',
+    level INT DEFAULT 1,
+    reputation INT DEFAULT 0,
+    coins INT DEFAULT 0,
+    crafting_mastery JSON NULL,
+    settings JSON NULL,
+    last_seen_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_profile (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Materials table
