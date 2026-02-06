@@ -216,15 +216,12 @@ class MaterialService
             }
 
             // Calculate total cost
-            $unitCost = $material->properties['cost'] ?? 10;
+            $unitCost = $this->getMaterialUnitCost($material);
             $totalCost = $unitCost * $quantity;
 
             // Get user's current gold (you'll need to implement this in AuthRepository/UserRepository)
-            $profile = $this->profileRepository->findByUserId($userId);
-            if (!$profile) {
-                $profile = $this->profileRepository->createDefaultProfile($userId, 'New Forge');
-            }
-            $userGold = $profile->coins ?? 0;
+            $profile = $this->getOrCreateProfile($userId);
+            $userGold = $profile->coins;
             if ($userGold < $totalCost) {
                 return [
                     'success' => false,
@@ -318,5 +315,19 @@ class MaterialService
             $this->logger->error("Failed to consume materials for user {$userId}: " . $e->getMessage());
             throw new \RuntimeException('Failed to consume materials');
         }
+    }
+
+    private function getOrCreateProfile(int $userId)
+    {
+        $profile = $this->profileRepository->findByUserId($userId);
+        if (!$profile) {
+            $profile = $this->profileRepository->createDefaultProfile($userId, 'New Forge');
+        }
+        return $profile;
+    }
+
+    private function getMaterialUnitCost(Material $material): int
+    {
+        return (int) ($material->properties['cost'] ?? 10);
     }
 }

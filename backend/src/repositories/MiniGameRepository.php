@@ -6,7 +6,7 @@ use PDO;
 
 class MiniGameRepository extends BaseRepository
 {
-    protected $table = 'minigame_history';
+    protected $table = 'minigames';
     protected $fillable = [
         'user_id',
         'game_type',
@@ -20,5 +20,13 @@ class MiniGameRepository extends BaseRepository
         parent::__construct($pdo);
     }
 
-    // Add minigame-specific methods as needed
+    public function logGame(array $data): int
+    {
+        return $this->create($data);
+    }
+
+    public function getUserHistory(int $userId, int $limit = 50): array
+    {
+        return $this->findBy(['user_id' => $userId], ['created_at' => 'DESC'], $limit);
+    }
 }

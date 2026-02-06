@@ -6,6 +6,7 @@ use App\Repositories\CraftingRepository;
 use App\Repositories\RecipeRepository;
 use App\Repositories\InventoryRepository;
 use App\Repositories\MaterialRepository;
+use App\Services\GameConfigService;
 use Psr\Log\LoggerInterface;
 
 class CraftingService
@@ -14,36 +15,43 @@ class CraftingService
     private RecipeRepository $recipeRepository;
     private InventoryRepository $inventoryRepository;
     private MaterialRepository $materialRepository;
+    private GameConfigService $configService;
     private LoggerInterface $logger;
 
     // Quality thresholds and constants
-    private const QUALITY_THRESHOLDS = [
+    private const DEFAULT_QUALITY_THRESHOLDS = [
         'excellent' => 80,
         'good' => 60,
         'fair' => 40,
         'poor' => 0
     ];
     
-    private const MAX_HAMMER_CLICKS = 4;
+    private const DEFAULT_MAX_HAMMER_CLICKS = 4;
     
-    private const QUALITY_MULTIPLIERS = [
+    private const DEFAULT_QUALITY_MULTIPLIERS = [
         'Excellent' => 1.2,
         'Good' => 1.1,
         'Fair' => 1.0,
         'Poor' => 0.8
     ];
 
+    private ?array $qualityThresholds = null;
+    private ?array $qualityMultipliers = null;
+    private ?int $maxHammerClicks = null;
+
     public function __construct(
         CraftingRepository $craftingRepository,
         RecipeRepository $recipeRepository,
         InventoryRepository $inventoryRepository,
         MaterialRepository $materialRepository,
+        GameConfigService $configService,
         LoggerInterface $logger
     ) {
         $this->craftingRepository = $craftingRepository;
         $this->recipeRepository = $recipeRepository;
         $this->inventoryRepository = $inventoryRepository;
         $this->materialRepository = $materialRepository;
+        $this->configService = $configService;
         $this->logger = $logger;
     }
 
@@ -53,11 +61,7 @@ class CraftingService
     public function startCrafting(int $userId, int $recipeId): array
     {
         try {
-            // Validate the recipe exists
-            $recipe = $this->recipeRepository->findById($recipeId);
-            if (!$recipe) {
-                throw new \InvalidArgumentException('Recipe not found');
-            }
+            $recipe = $this->getRecipeOrFail($recipeId);
 
             // Validate user has required materials
             $validation = $this->validateCrafting($userId, $recipeId);
@@ -90,8 +94,8 @@ class CraftingService
             return [
                 'session_id' => $sessionId,
                 'recipe' => $recipe,
-                'max_hammer_clicks' => self::MAX_HAMMER_CLICKS,
-                'quality_thresholds' => self::QUALITY_THRESHOLDS,
+                'max_hammer_clicks' => $this->getMaxHammerClicks(),
+                'quality_thresholds' => $this->getQualityThresholds(),
                 'status' => 'started'
             ];
 
@@ -116,7 +120,7 @@ class CraftingService
                 throw new \InvalidArgumentException('Invalid crafting session');
             }
 
-            if ($session['hammer_clicks'] >= self::MAX_HAMMER_CLICKS) {
+            if ($session['hammer_clicks'] >= $this->getMaxHammerClicks()) {
                 throw new \RuntimeException('Maximum hammer clicks reached');
             }
 
@@ -131,13 +135,14 @@ class CraftingService
                 'total_accuracy' => $newTotalAccuracy
             ]);
 
-            $isComplete = $newHammerClicks >= self::MAX_HAMMER_CLICKS;
+            $maxClicks = $this->getMaxHammerClicks();
+            $isComplete = $newHammerClicks >= $maxClicks;
 
             $this->logger->info("Hammer hit processed", [
                 'session_id' => $sessionId,
                 'hit_success' => $hitSuccess,
                 'new_accuracy' => $newTotalAccuracy,
-                'clicks_remaining' => self::MAX_HAMMER_CLICKS - $newHammerClicks
+                'clicks_remaining' => $maxClicks - $newHammerClicks
             ]);
 
             return [
@@ -145,9 +150,9 @@ class CraftingService
                 'accuracy_increase' => $accuracyIncrease,
                 'total_accuracy' => $newTotalAccuracy,
                 'hammer_clicks' => $newHammerClicks,
-                'max_clicks' => self::MAX_HAMMER_CLICKS,
+                'max_clicks' => $maxClicks,
                 'is_complete' => $isComplete,
-                'remaining_clicks' => self::MAX_HAMMER_CLICKS - $newHammerClicks
+                'remaining_clicks' => $maxClicks - $newHammerClicks
             ];
 
         } catch (\Exception $e) {
@@ -166,36 +171,17 @@ class CraftingService
     public function completeCrafting(int $userId, int $sessionId, int $totalAccuracy): array
     {
         try {
-            $session = $this->craftingRepository->getSession($sessionId, $userId);
-            if (!$session || $session['status'] !== 'in_progress') {
-                throw new \InvalidArgumentException('Invalid crafting session');
-            }
-
-            $recipe = $this->recipeRepository->findById($session['recipe_id']);
-            if (!$recipe) {
-                throw new \RuntimeException('Recipe not found');
-            }
+            $session = $this->getSessionOrFail($userId, $sessionId);
+            $recipe = $this->getRecipeOrFail($session['recipe_id']);
 
             // Determine quality based on accuracy
             $quality = $this->calculateQuality($totalAccuracy);
             
             // Calculate final item value
-            $baseValue = $recipe['sell_price'] ?? 100;
-            $qualityMultiplier = self::QUALITY_MULTIPLIERS[$quality];
-            $finalValue = (int) floor($baseValue * $qualityMultiplier);
+            $finalValue = $this->calculateFinalValue($recipe, $quality);
 
             // Create the crafted item
-            $stats = $this->calculateItemStats($recipe, $quality);
-            $craftedItem = [
-                'name' => $recipe['name'],
-                'type' => $stats['type'],
-                'quality' => $quality,
-                'value' => $finalValue,
-                'icon' => $recipe['icon'] ?? 'âš’ï¸',
-                'stats' => $stats['values'],
-                'crafted_at' => date('Y-m-d H:i:s'),
-                'recipe_id' => $recipe['id']
-            ];
+            $craftedItem = $this->buildCraftedItem($recipe, $quality, $finalValue);
 
             // Add item to user's inventory
             $itemId = $this->inventoryRepository->addItem($userId, $craftedItem);
@@ -315,9 +301,9 @@ class CraftingService
                 'status' => $session['status'],
                 'progress' => [
                     'hammer_clicks' => $session['hammer_clicks'],
-                    'max_clicks' => self::MAX_HAMMER_CLICKS,
+                    'max_clicks' => $this->getMaxHammerClicks(),
                     'total_accuracy' => $session['total_accuracy'],
-                    'remaining_clicks' => self::MAX_HAMMER_CLICKS - $session['hammer_clicks']
+                    'remaining_clicks' => $this->getMaxHammerClicks() - $session['hammer_clicks']
                 ]
             ];
 
@@ -352,15 +338,56 @@ class CraftingService
      */
     private function calculateQuality(int $accuracy): string
     {
-        if ($accuracy >= self::QUALITY_THRESHOLDS['excellent']) {
+        $thresholds = $this->getQualityThresholds();
+        if ($accuracy >= $thresholds['excellent']) {
             return 'Excellent';
-        } elseif ($accuracy >= self::QUALITY_THRESHOLDS['good']) {
+        } elseif ($accuracy >= $thresholds['good']) {
             return 'Good';
-        } elseif ($accuracy >= self::QUALITY_THRESHOLDS['fair']) {
+        } elseif ($accuracy >= $thresholds['fair']) {
             return 'Fair';
         } else {
             return 'Poor';
         }
+    }
+
+    private function getRecipeOrFail(int $recipeId): array
+    {
+        $recipe = $this->recipeRepository->findById($recipeId);
+        if (!$recipe) {
+            throw new \InvalidArgumentException('Recipe not found');
+        }
+        return $recipe;
+    }
+
+    private function getSessionOrFail(int $userId, int $sessionId): array
+    {
+        $session = $this->craftingRepository->getSession($sessionId, $userId);
+        if (!$session || $session['status'] !== 'in_progress') {
+            throw new \InvalidArgumentException('Invalid crafting session');
+        }
+        return $session;
+    }
+
+    private function calculateFinalValue(array $recipe, string $quality): int
+    {
+        $baseValue = $recipe['sell_price'] ?? 100;
+        $qualityMultiplier = $this->getQualityMultipliers()[$quality] ?? 1.0;
+        return (int) floor($baseValue * $qualityMultiplier);
+    }
+
+    private function buildCraftedItem(array $recipe, string $quality, int $finalValue): array
+    {
+        $stats = $this->calculateItemStats($recipe, $quality);
+        return [
+            'name' => $recipe['name'],
+            'type' => $stats['type'],
+            'quality' => $quality,
+            'value' => $finalValue,
+            'icon' => $recipe['icon'] ?? 'âš’ï¸',
+            'stats' => $stats['values'],
+            'crafted_at' => date('Y-m-d H:i:s'),
+            'recipe_id' => $recipe['id']
+        ];
     }
 
     /**
@@ -379,7 +406,7 @@ class CraftingService
         ];
 
         $base = $baseByDifficulty[$difficulty] ?? 10;
-        $multiplier = self::QUALITY_MULTIPLIERS[$quality] ?? 1.0;
+        $multiplier = $this->getQualityMultipliers()[$quality] ?? 1.0;
 
         $type = 'tool';
         $stats = [];
@@ -454,5 +481,51 @@ class CraftingService
             $this->logger->error("Failed to craft for user {$userId}: " . $e->getMessage());
             throw new \RuntimeException('Failed to craft item');
         }
+    }
+
+    private function getQualityThresholds(): array
+    {
+        if ($this->qualityThresholds !== null) {
+            return $this->qualityThresholds;
+        }
+
+        $value = $this->configService->getValue('crafting_quality_thresholds', self::DEFAULT_QUALITY_THRESHOLDS);
+        if (!is_array($value)) {
+            $value = self::DEFAULT_QUALITY_THRESHOLDS;
+        }
+
+        $this->qualityThresholds = array_merge(self::DEFAULT_QUALITY_THRESHOLDS, $value);
+        return $this->qualityThresholds;
+    }
+
+    private function getQualityMultipliers(): array
+    {
+        if ($this->qualityMultipliers !== null) {
+            return $this->qualityMultipliers;
+        }
+
+        $value = $this->configService->getValue('crafting_quality_multipliers', self::DEFAULT_QUALITY_MULTIPLIERS);
+        if (!is_array($value)) {
+            $value = self::DEFAULT_QUALITY_MULTIPLIERS;
+        }
+
+        $this->qualityMultipliers = array_merge(self::DEFAULT_QUALITY_MULTIPLIERS, $value);
+        return $this->qualityMultipliers;
+    }
+
+    private function getMaxHammerClicks(): int
+    {
+        if ($this->maxHammerClicks !== null) {
+            return $this->maxHammerClicks;
+        }
+
+        $value = $this->configService->getValue('crafting_max_hammer_clicks', self::DEFAULT_MAX_HAMMER_CLICKS);
+        $maxClicks = (int) $value;
+        if ($maxClicks <= 0) {
+            $maxClicks = self::DEFAULT_MAX_HAMMER_CLICKS;
+        }
+
+        $this->maxHammerClicks = $maxClicks;
+        return $this->maxHammerClicks;
     }
 }

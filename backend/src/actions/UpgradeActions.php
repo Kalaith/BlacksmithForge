@@ -23,9 +23,15 @@ class UpgradeActions {
     }
 
     public static function purchase($userId, $upgradeId) {
-        return [
-            'success' => false,
-            'message' => 'Upgrade purchase not implemented'
-        ];
+        try {
+            $upgradeService = ContainerConfig::createContainer()->get(UpgradeService::class);
+            $result = $upgradeService->purchaseUpgrade((int) $userId, (int) $upgradeId);
+            return $result;
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }

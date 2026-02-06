@@ -102,6 +102,24 @@ CREATE TABLE IF NOT EXISTS upgrades (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- User upgrades table
+CREATE TABLE IF NOT EXISTS user_upgrades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    upgrade_id INT NOT NULL,
+    purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_upgrade (user_id, upgrade_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (upgrade_id) REFERENCES upgrades(id) ON DELETE CASCADE
+);
+
+-- Game configuration table
+CREATE TABLE IF NOT EXISTS game_config (
+    `key` VARCHAR(100) PRIMARY KEY,
+    `value` JSON NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Mini-games table
 CREATE TABLE IF NOT EXISTS minigames (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -135,3 +153,60 @@ INSERT IGNORE INTO upgrades (name, description, cost, effect, unlock_level) VALU
 ('Better Furnace', 'Increases crafting speed by 25%', 500, '{"speed_multiplier": 1.25}', 1),
 ('Skilled Hands', 'Reduces chance of crafting failure', 1000, '{"success_bonus": 0.15}', 3),
 ('Master Forge', 'Unlocks legendary recipes', 2500, '{"unlock_legendary": true}', 5);
+
+INSERT IGNORE INTO game_config (`key`, `value`) VALUES
+('crafting_quality_thresholds', '{"excellent":80,"good":60,"fair":40,"poor":0}'),
+('crafting_quality_multipliers', '{"Excellent":1.2,"Good":1.1,"Fair":1.0,"Poor":0.8}'),
+('crafting_max_hammer_clicks', '4');
+
+
+-- Customer types table
+CREATE TABLE IF NOT EXISTS customer_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    preferences VARCHAR(50) NOT NULL,
+    icon VARCHAR(50),
+    description TEXT,
+    budget_min INT DEFAULT 0,
+    budget_max INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Customer instances for users
+CREATE TABLE IF NOT EXISTS customer_instances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    budget INT DEFAULT 0,
+    preferences VARCHAR(50) NOT NULL,
+    icon VARCHAR(50),
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'waiting',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (type_id) REFERENCES customer_types(id) ON DELETE CASCADE
+);
+
+-- Customer sales log
+CREATE TABLE IF NOT EXISTS customer_sales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    item_id VARCHAR(64) NOT NULL,
+    sale_price INT DEFAULT 0,
+    base_price INT DEFAULT 0,
+    modifier DECIMAL(6,3) DEFAULT 1.0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customer_instances(id) ON DELETE CASCADE
+);
+
+INSERT IGNORE INTO customer_types (name, preferences, icon, description, budget_min, budget_max) VALUES
+('Village Guard', 'durability', '???????', 'Seeks sturdy, reliable equipment', 40, 80),
+('Traveling Merchant', 'value', '????', 'Looks for good deals and cost-effective items', 20, 50),
+('Noble Knight', 'quality', '????', 'Demands the finest craftsmanship', 80, 150),
+('Apprentice Warrior', 'value', '??????', 'New warrior seeking affordable gear', 15, 35),
+('Master Blacksmith', 'quality', '????', 'Appreciates exceptional workmanship', 60, 120);

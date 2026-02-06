@@ -20,5 +20,26 @@ class UpgradeRepository extends BaseRepository
         parent::__construct($pdo);
     }
 
-    // Add upgrade-specific methods as needed
+    public function findUpgradeById(int $upgradeId): ?array
+    {
+        return $this->find($upgradeId);
+    }
+
+    public function userHasUpgrade(int $userId, int $upgradeId): bool
+    {
+        $stmt = $this->query(
+            "SELECT 1 FROM user_upgrades WHERE user_id = ? AND upgrade_id = ? LIMIT 1",
+            [$userId, $upgradeId]
+        );
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public function addUserUpgrade(int $userId, int $upgradeId): int
+    {
+        $this->query(
+            "INSERT INTO user_upgrades (user_id, upgrade_id) VALUES (?, ?)",
+            [$userId, $upgradeId]
+        );
+        return (int) $this->pdo->lastInsertId();
+    }
 }

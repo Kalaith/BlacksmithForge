@@ -5,32 +5,66 @@ use App\Http\Response;
 use App\Http\Request;
 use App\Repositories\AuthRepository;
 use App\Repositories\BlacksmithProfileRepository;
+use App\Services\AuthService;
 
 class AuthController {
     public function __construct(
         private AuthRepository $authRepository,
-        private BlacksmithProfileRepository $profileRepository
+        private BlacksmithProfileRepository $profileRepository,
+        private AuthService $authService
     ) {}
 
     public function register(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $result = \App\Actions\AuthActions::register($data);
-        $response->getBody()->write(json_encode($result));
+        try {
+            $user = $this->authService->register($data);
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'data' => $user->toArray()
+            ]));
+        } catch (\InvalidArgumentException $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
         return $response->withHeader('Content-Type', 'application/json');
     }
 
     public function login(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
-        $result = \App\Actions\AuthActions::login($data);
-        $response->getBody()->write(json_encode($result));
+        try {
+            $user = $this->authService->login($data['username'] ?? '', $data['password'] ?? '');
+            if (!$user) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Invalid credentials'
+                ]));
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'data' => $user->toArray()
+            ]));
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
         return $response->withHeader('Content-Type', 'application/json');
     }
 
     public function logout(Request $request, Response $response, $args) {
         $authUser = $request->getAttribute('auth_user');
         $userId = $authUser['id'] ?? null;
-        $result = \App\Actions\AuthActions::logout($userId);
-        $response->getBody()->write(json_encode($result));
+        $response->getBody()->write(json_encode([
+            'success' => true,
+            'message' => $userId ? 'Logged out' : 'No session'
+        ]));
         return $response->withHeader('Content-Type', 'application/json');
     }
 

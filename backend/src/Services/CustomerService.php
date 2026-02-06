@@ -4,14 +4,14 @@ namespace App\Services;
 
 use App\Repositories\CustomerRepository;
 use App\Repositories\InventoryRepository;
-use App\Repositories\AuthRepository;
+use App\Repositories\BlacksmithProfileRepository;
 use Psr\Log\LoggerInterface;
 
 class CustomerService
 {
     private CustomerRepository $customerRepository;
     private InventoryRepository $inventoryRepository;
-    private AuthRepository $authRepository;
+    private BlacksmithProfileRepository $profileRepository;
     private LoggerInterface $logger;
 
     // Customer preference modifiers
@@ -33,54 +33,15 @@ class CustomerService
         ]
     ];
 
-    // Customer types with different behaviors
-    private const CUSTOMER_TYPES = [
-        [
-            'name' => 'Village Guard',
-            'budget_range' => [40, 80],
-            'preferences' => 'durability',
-            'icon' => '🛡️',
-            'description' => 'Seeks sturdy, reliable equipment'
-        ],
-        [
-            'name' => 'Traveling Merchant',
-            'budget_range' => [20, 50],
-            'preferences' => 'value',
-            'icon' => '🎒',
-            'description' => 'Looks for good deals and cost-effective items'
-        ],
-        [
-            'name' => 'Noble Knight',
-            'budget_range' => [80, 150],
-            'preferences' => 'quality',
-            'icon' => '👑',
-            'description' => 'Demands the finest craftsmanship'
-        ],
-        [
-            'name' => 'Apprentice Warrior',
-            'budget_range' => [15, 35],
-            'preferences' => 'value',
-            'icon' => '⚔️',
-            'description' => 'New warrior seeking affordable gear'
-        ],
-        [
-            'name' => 'Master Blacksmith',
-            'budget_range' => [60, 120],
-            'preferences' => 'quality',
-            'icon' => '🔨',
-            'description' => 'Appreciates exceptional workmanship'
-        ]
-    ];
-
     public function __construct(
         CustomerRepository $customerRepository,
         InventoryRepository $inventoryRepository,
-        AuthRepository $authRepository,
+        BlacksmithProfileRepository $profileRepository,
         LoggerInterface $logger
     ) {
         $this->customerRepository = $customerRepository;
         $this->inventoryRepository = $inventoryRepository;
-        $this->authRepository = $authRepository;
+        $this->profileRepository = $profileRepository;
         $this->logger = $logger;
     }
 
@@ -90,7 +51,7 @@ class CustomerService
     public function getAllCustomers(): array
     {
         try {
-            return self::CUSTOMER_TYPES;
+            return $this->customerRepository->getAllCustomerTypes();
         } catch (\Exception $e) {
             $this->logger->error('Failed to get all customers: ' . $e->getMessage());
             throw new \RuntimeException('Failed to retrieve customers');
@@ -98,15 +59,12 @@ class CustomerService
     }
 
     /**
-     * Get customer by ID
+     * Get customer type by ID
      */
     public function getCustomerById(int $customerId): ?array
     {
         try {
-            if (isset(self::CUSTOMER_TYPES[$customerId])) {
-                return self::CUSTOMER_TYPES[$customerId];
-            }
-            return null;
+            return $this->customerRepository->getCustomerTypeById($customerId);
         } catch (\Exception $e) {
             $this->logger->error('Failed to get customer by ID: ' . $e->getMessage());
             throw new \RuntimeException('Failed to retrieve customer');
@@ -138,15 +96,23 @@ class CustomerService
                 throw new \RuntimeException('User already has a current customer');
             }
 
+            $customerTypes = $this->customerRepository->getAllCustomerTypes();
+            if (count($customerTypes) === 0) {
+                throw new \RuntimeException('No customer types available');
+            }
+
             // Randomly select a customer type
-            $customerType = self::CUSTOMER_TYPES[array_rand(self::CUSTOMER_TYPES)];
+            $customerType = $customerTypes[array_rand($customerTypes)];
             
             // Generate random budget within range
-            $budget = rand($customerType['budget_range'][0], $customerType['budget_range'][1]);
+            $budgetMin = (int) ($customerType['budget_min'] ?? 0);
+            $budgetMax = (int) ($customerType['budget_max'] ?? 0);
+            $budget = $budgetMax > $budgetMin ? rand($budgetMin, $budgetMax) : $budgetMin;
             
             // Create customer instance
             $customerData = [
                 'user_id' => $userId,
+                'type_id' => $customerType['id'],
                 'name' => $customerType['name'],
                 'budget' => $budget,
                 'preferences' => $customerType['preferences'],
@@ -179,44 +145,11 @@ class CustomerService
     public function calculateSellingPrice(int $userId, int $itemId, int $customerId): array
     {
         try {
-            $customer = $this->customerRepository->getCustomerById($customerId);
-            if (!$customer || $customer['user_id'] !== $userId) {
-                throw new \RuntimeException('Invalid customer');
-            }
-
-            $item = $this->inventoryRepository->getItemById($itemId);
-            if (!$item || $item['user_id'] !== $userId) {
-                throw new \RuntimeException('Invalid item');
-            }
+            $customer = $this->getCustomerOrFail($userId, $customerId);
+            $item = $this->getItemOrFail($userId, $itemId);
 
             $basePrice = $item['value'] ?? 0;
-            $finalPrice = $basePrice;
-            $modifier = 1.0;
-            $reason = 'Base price';
-
-            // Apply customer preference modifiers
-            $preferences = $customer['preferences'];
-            
-            if ($preferences === 'quality' && isset($item['quality'])) {
-                $qualityModifier = self::PREFERENCE_MODIFIERS['quality'][$item['quality']] ?? 1.0;
-                if ($qualityModifier > 1.0) {
-                    $modifier = $qualityModifier;
-                    $reason = "Quality bonus ({$item['quality']})";
-                }
-            } elseif ($preferences === 'value') {
-                $threshold = $customer['budget'] * self::PREFERENCE_MODIFIERS['value']['threshold'];
-                if ($basePrice <= $threshold) {
-                    $modifier = self::PREFERENCE_MODIFIERS['value']['modifier'];
-                    $reason = 'Value preference bonus';
-                }
-            } elseif ($preferences === 'durability' && isset($item['type'])) {
-                $durabilityModifier = self::PREFERENCE_MODIFIERS['durability'][$item['type']] ?? 1.0;
-                if ($durabilityModifier > 1.0) {
-                    $modifier = $durabilityModifier;
-                    $reason = "Durability bonus ({$item['type']})";
-                }
-            }
-
+            [$modifier, $reason] = $this->getPreferenceModifier($customer, $item, $basePrice);
             $finalPrice = (int) floor($basePrice * $modifier);
 
             // Check if customer can afford it
@@ -255,13 +188,13 @@ class CustomerService
             // Remove item from inventory
             $this->inventoryRepository->removeItem($userId, $itemId);
 
-            // Add gold to user
-            $user = $this->authRepository->findById($userId);
-            $newGold = ($user['gold'] ?? 0) + $priceInfo['final_price'];
-            $newReputation = ($user['reputation'] ?? 0) + 1;
-            
-            $this->authRepository->updateUserStats($userId, [
-                'gold' => $newGold,
+            // Add coins/reputation to profile
+            $profile = $this->getProfileOrCreate($userId);
+            $newGold = ($profile->coins ?? 0) + $priceInfo['final_price'];
+            $newReputation = ($profile->reputation ?? 0) + 1;
+
+            $this->profileRepository->updateByUserId($userId, [
+                'coins' => $newGold,
                 'reputation' => $newReputation
             ]);
 
@@ -317,5 +250,61 @@ class CustomerService
             $this->logger->error("Failed to dismiss customer for user {$userId}: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    private function getCustomerOrFail(int $userId, int $customerId): array
+    {
+        $customer = $this->customerRepository->getCustomerById($customerId);
+        if (!$customer || ($customer['user_id'] ?? null) !== $userId) {
+            throw new \RuntimeException('Invalid customer');
+        }
+        return $customer;
+    }
+
+    private function getItemOrFail(int $userId, int $itemId): array
+    {
+        $item = $this->inventoryRepository->getItemById($userId, $itemId);
+        if (!$item) {
+            throw new \RuntimeException('Invalid item');
+        }
+        return $item;
+    }
+
+    private function getProfileOrCreate(int $userId)
+    {
+        $profile = $this->profileRepository->findByUserId($userId);
+        if (!$profile) {
+            $profile = $this->profileRepository->createDefaultProfile($userId, 'New Forge');
+        }
+        return $profile;
+    }
+
+    private function getPreferenceModifier(array $customer, array $item, int $basePrice): array
+    {
+        $modifier = 1.0;
+        $reason = 'Base price';
+        $preferences = $customer['preferences'] ?? '';
+
+        if ($preferences === 'quality' && isset($item['quality'])) {
+            $qualityModifier = self::PREFERENCE_MODIFIERS['quality'][$item['quality']] ?? 1.0;
+            if ($qualityModifier > 1.0) {
+                $modifier = $qualityModifier;
+                $reason = "Quality bonus ({$item['quality']})";
+            }
+        } elseif ($preferences === 'value') {
+            $threshold = ($customer['budget'] ?? 0) * self::PREFERENCE_MODIFIERS['value']['threshold'];
+            if ($basePrice <= $threshold) {
+                $modifier = self::PREFERENCE_MODIFIERS['value']['modifier'];
+                $reason = 'Value preference bonus';
+            }
+        } elseif ($preferences === 'durability' && isset($item['type'])) {
+            $durabilityModifier = self::PREFERENCE_MODIFIERS['durability'][$item['type']] ?? 1.0;
+            if ($durabilityModifier > 1.0) {
+                $modifier = $durabilityModifier;
+                $reason = "Durability bonus ({$item['type']})";
+            }
+        }
+
+        return [$modifier, $reason];
     }
 }

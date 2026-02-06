@@ -19,12 +19,20 @@ class MiniGameService
     public function playGame(int $userId, string $gameType, array $gameData): array
     {
         try {
-            // Basic mini-game logic would go here
-            // For now, return a simple response
+            $score = isset($gameData['score']) ? (int) $gameData['score'] : rand(50, 100);
+            $result = $gameData['result'] ?? 'Good job!';
+
+            $this->repository->logGame([
+                'user_id' => $userId,
+                'game_type' => $gameType,
+                'score' => $score,
+                'result' => $result
+            ]);
+
             return [
                 'success' => true,
-                'score' => rand(50, 100),
-                'result' => 'Good job!'
+                'score' => $score,
+                'result' => $result
             ];
         } catch (\Exception $e) {
             $this->logger->error("Failed to play mini-game for user {$userId}: " . $e->getMessage());
@@ -32,5 +40,13 @@ class MiniGameService
         }
     }
 
-    // Add other mini-game methods as needed
+    public function getHistory(int $userId, int $limit = 50): array
+    {
+        try {
+            return $this->repository->getUserHistory($userId, $limit);
+        } catch (\Exception $e) {
+            $this->logger->error("Failed to get mini-game history for user {$userId}: " . $e->getMessage());
+            throw new \RuntimeException('Failed to retrieve mini-game history');
+        }
+    }
 }
