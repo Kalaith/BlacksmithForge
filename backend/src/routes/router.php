@@ -145,6 +145,7 @@ return function (Router $router): void {
 
     // Upgrades
     $router->get($api . '/upgrades', [UpgradeController::class, 'getAll']);
+    $router->get($api . '/upgrades/purchased', [UpgradeController::class, 'getPurchased'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/upgrades/purchase', [UpgradeController::class, 'purchase'], [WebHatcheryJwtMiddleware::class]);
 
     // Mini-Games
@@ -160,11 +161,34 @@ return function (Router $router): void {
         }
 
         $secret = $_ENV['JWT_SECRET'] ?? '';
+        $debugPayload = [
+            'authorization_header_present' => $authHeader ? true : false,
+            'bearer_token_parsed' => $token ? true : false,
+            'jwt_secret_set' => $secret !== '' ? true : false,
+            'request_uri' => $request->getUri() ?? '',
+            'content_type' => $request->getHeaderLine('Content-Type') ?: '',
+            'server_auth_header_present' => [
+                'HTTP_AUTHORIZATION' => isset($_SERVER['HTTP_AUTHORIZATION']) && $_SERVER['HTTP_AUTHORIZATION'] !== '',
+                'REDIRECT_HTTP_AUTHORIZATION' => isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] !== '',
+                'AUTHORIZATION' => isset($_SERVER['AUTHORIZATION']) && $_SERVER['AUTHORIZATION'] !== '',
+            ],
+            'server_auth_header_values' => [
+                'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
+                'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
+                'AUTHORIZATION' => $_SERVER['AUTHORIZATION'] ?? null,
+            ],
+            'request_headers_keys' => array_keys($_SERVER),
+        ];
+        $includeDebug = true;
         if (!$token || !$secret) {
-            $response->getBody()->write(json_encode([
+            $payload = [
                 'success' => false,
                 'message' => 'Unauthorized'
-            ]));
+            ];
+            if ($includeDebug) {
+                $payload['debug'] = $debugPayload;
+            }
+            $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
         }
 
@@ -175,8 +199,10 @@ return function (Router $router): void {
             $role = $decoded->role ?? null;
             $username = $decoded->username ?? ($email !== '' ? explode('@', $email)[0] : 'user');
 
-            $db = \App\External\DatabaseService::getInstance();
-            $profileRepo = new \App\Repositories\BlacksmithProfileRepository($db->getPdo());
+            $container = \App\Utils\ContainerConfig::createContainer();
+            $authRepo = $container->get(\App\Repositories\AuthRepository::class);
+            $profileRepo = $container->get(\App\Repositories\BlacksmithProfileRepository::class);
+            $authRepo->upsertWebHatcheryUser((int) $userId, $email, $username);
             $profileModel = $profileRepo->findByUserId((int) $userId);
             if (!$profileModel) {
                 $profileModel = $profileRepo->createDefaultProfile((int) $userId, ucfirst($username) . ' Forge');
@@ -189,7 +215,7 @@ return function (Router $router): void {
                 'coins' => $profileModel->coins,
             ];
 
-            $response->getBody()->write(json_encode([
+            $payload = [
                 'success' => true,
                 'data' => [
                     'user' => [
@@ -200,13 +226,22 @@ return function (Router $router): void {
                     ],
                     'profile' => $profile,
                 ],
-            ]));
+            ];
+            if ($includeDebug) {
+                $payload['debug'] = $debugPayload;
+            }
+            $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            $response->getBody()->write(json_encode([
+            $debugPayload['jwt_error'] = $e->getMessage();
+            $payload = [
                 'success' => false,
                 'message' => 'Invalid token'
-            ]));
+            ];
+            if ($includeDebug) {
+                $payload['debug'] = $debugPayload;
+            }
+            $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
         }
     });

@@ -34,4 +34,21 @@ class UpgradeActions {
             ];
         }
     }
+
+    public static function getPurchased($userId) {
+        try {
+            $upgradeService = ContainerConfig::createContainer()->get(UpgradeService::class);
+            $upgradeIds = $upgradeService->getUserUpgradeIds((int) $userId);
+            return [
+                'success' => true,
+                'data' => $upgradeIds,
+                'count' => count($upgradeIds)
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
 }

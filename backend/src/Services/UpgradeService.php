@@ -112,6 +112,20 @@ class UpgradeService
         }
     }
 
+    public function getUserUpgradeIds(int $userId): array
+    {
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            return $this->repository->getUserUpgradeIds($userId);
+        } catch (\Exception $e) {
+            $this->logger->error("Failed to get user upgrades for user {$userId}: " . $e->getMessage());
+            throw new \RuntimeException('Failed to retrieve user upgrades');
+        }
+    }
+
     private function getOrCreateProfile(int $userId)
     {
         $profile = $this->profileRepository->findByUserId($userId);

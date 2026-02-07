@@ -12,6 +12,10 @@ Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-R
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule .* - [R=200,L]
 
+# Forward Authorization header to PHP
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 # Route all requests to index.php (Slim Framework)
 # This allows Slim to handle routing internally
 RewriteCond %{REQUEST_FILENAME} !-f

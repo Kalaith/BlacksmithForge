@@ -10,6 +10,13 @@ class UpgradeController {
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
+
+    public function getPurchased(Request $request, Response $response, $args) {
+        $userId = $this->getAuthUserId($request);
+        $result = \App\Actions\UpgradeActions::getPurchased($userId);
+        $response->getBody()->write(json_encode($result));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
     public function purchase(Request $request, Response $response, $args) {
         $data = $request->getParsedBody();
         $userId = $this->getAuthUserId($request);

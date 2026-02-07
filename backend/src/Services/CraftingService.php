@@ -383,7 +383,7 @@ class CraftingService
             'type' => $stats['type'],
             'quality' => $quality,
             'value' => $finalValue,
-            'icon' => $recipe['icon'] ?? 'âš’ï¸',
+            'icon' => $recipe['icon'] ?? '⚒️',
             'stats' => $stats['values'],
             'crafted_at' => date('Y-m-d H:i:s'),
             'recipe_id' => $recipe['id']

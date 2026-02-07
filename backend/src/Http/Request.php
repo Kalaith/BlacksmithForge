@@ -25,7 +25,17 @@ class Request
     public function getHeaderLine(string $name): string
     {
         $key = strtolower($name);
-        return $this->headers[$key] ?? '';
+        if (isset($this->headers[$key])) {
+            return $this->headers[$key];
+        }
+
+        if ($key === 'authorization') {
+            return $this->serverParams['HTTP_AUTHORIZATION']
+                ?? $this->serverParams['REDIRECT_HTTP_AUTHORIZATION']
+                ?? '';
+        }
+
+        return '';
     }
 
     public function getQueryParams(): array

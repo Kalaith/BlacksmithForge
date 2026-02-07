@@ -42,4 +42,13 @@ class UpgradeRepository extends BaseRepository
         );
         return (int) $this->pdo->lastInsertId();
     }
+
+    public function getUserUpgradeIds(int $userId): array
+    {
+        $stmt = $this->query(
+            "SELECT upgrade_id FROM user_upgrades WHERE user_id = ? ORDER BY purchased_at DESC",
+            [$userId]
+        );
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
 }
