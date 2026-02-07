@@ -88,6 +88,14 @@ final class Router
                 foreach ($middlewares as $mw) {
                     $mwInstance = is_string($mw) ? new $mw() : $mw;
                     $result = $mwInstance($request, $response, $routeParams);
+                    if ($result instanceof Response) {
+                        $this->emit($this->withCors($result));
+                        return;
+                    }
+                    if ($result instanceof Request) {
+                        $request = $result;
+                        continue;
+                    }
                     if ($result === false) {
                         $this->emit($this->withCors($response));
                         return;

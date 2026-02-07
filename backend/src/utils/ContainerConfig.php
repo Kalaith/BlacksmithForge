@@ -156,9 +156,10 @@ class ContainerConfig
             // Controllers
             \App\Controllers\AuthController::class => function (
                 AuthRepository $authRepo,
-                BlacksmithProfileRepository $profileRepo
+                BlacksmithProfileRepository $profileRepo,
+                AuthService $authService
             ) {
-                return new \App\Controllers\AuthController($authRepo, $profileRepo);
+                return new \App\Controllers\AuthController($authRepo, $profileRepo, $authService);
             },
             
             \App\Controllers\MaterialController::class => function (MaterialService $materialService) {

@@ -72,7 +72,7 @@ The backend should provide RESTful APIs for all game features, handle authentica
 ---
 
 ## General Requirements
-- Use PHP (Laravel or Slim recommended for REST APIs)
+- Use PHP
 - Use MySQL or MariaDB for data storage
 - Implement input validation and error handling
 - Use JWT or session-based authentication
@@ -161,7 +161,7 @@ backend/
 ## Setup Instructions
 
 1. **Environment**: Use PHP 8.1+, Composer, and MySQL/MariaDB.
-2. **Install dependencies**: Run `composer install` to set up packages (Laravel or Slim recommended).
+2. **Install dependencies**: Run `composer install` to set up packages 
 3. **Environment variables**: Copy `.env.example` to `.env` and configure database, JWT secret, etc.
 4. **Database migration**: Use migration scripts to set up tables for all entities (materials, recipes, customers, etc.).
 5. **Seeding**: Add initial game data using seeders.

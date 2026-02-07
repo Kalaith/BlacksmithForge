@@ -8,9 +8,8 @@ use App\Controllers\InventoryController;
 use App\Controllers\CraftingController;
 use App\Controllers\UpgradeController;
 use App\Controllers\MiniGameController;
+use App\Controllers\AuthController;
 use App\Middleware\WebHatcheryJwtMiddleware;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 
 return function (Router $router): void {
     $api = '/api/v1';
@@ -99,30 +98,30 @@ return function (Router $router): void {
         return $response->withHeader('Content-Type', 'application/json')->withStatus($statusCode);
     };
 
-    // Materials
-    $router->get($api . '/materials', [MaterialController::class, 'getAll']);
-    $router->get($api . '/materials/{id}', [MaterialController::class, 'get']);
-    $router->get($api . '/materials/type/{type}', [MaterialController::class, 'getByType']);
-    $router->get($api . '/materials/rarity/{rarity}', [MaterialController::class, 'getByRarity']);
-    $router->post($api . '/materials', [MaterialController::class, 'create']);
-    $router->put($api . '/materials/{id}', [MaterialController::class, 'update']);
-    $router->delete($api . '/materials/{id}', [MaterialController::class, 'delete']);
+    // Materials (auth required)
+    $router->get($api . '/materials', [MaterialController::class, 'getAll'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/materials/{id}', [MaterialController::class, 'get'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/materials/type/{type}', [MaterialController::class, 'getByType'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/materials/rarity/{rarity}', [MaterialController::class, 'getByRarity'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/materials', [MaterialController::class, 'create'], [WebHatcheryJwtMiddleware::class]);
+    $router->put($api . '/materials/{id}', [MaterialController::class, 'update'], [WebHatcheryJwtMiddleware::class]);
+    $router->delete($api . '/materials/{id}', [MaterialController::class, 'delete'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/materials/user/{userId}', [MaterialController::class, 'getUserMaterials'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/materials/purchase', [MaterialController::class, 'purchaseMaterial'], [WebHatcheryJwtMiddleware::class]);
 
-    // Recipes
-    $router->get($api . '/recipes', [RecipeController::class, 'getAll']);
-    $router->get($api . '/recipes/{id}', [RecipeController::class, 'get']);
-    $router->post($api . '/recipes', [RecipeController::class, 'create']);
-    $router->put($api . '/recipes/{id}', [RecipeController::class, 'update']);
-    $router->delete($api . '/recipes/{id}', [RecipeController::class, 'delete']);
+    // Recipes (auth required)
+    $router->get($api . '/recipes', [RecipeController::class, 'getAll'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/recipes/{id}', [RecipeController::class, 'get'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/recipes', [RecipeController::class, 'create'], [WebHatcheryJwtMiddleware::class]);
+    $router->put($api . '/recipes/{id}', [RecipeController::class, 'update'], [WebHatcheryJwtMiddleware::class]);
+    $router->delete($api . '/recipes/{id}', [RecipeController::class, 'delete'], [WebHatcheryJwtMiddleware::class]);
 
-    // Customers
-    $router->get($api . '/customers', [CustomerController::class, 'getAll']);
-    $router->get($api . '/customers/{id}', [CustomerController::class, 'get']);
-    $router->post($api . '/customers', [CustomerController::class, 'create']);
-    $router->put($api . '/customers/{id}', [CustomerController::class, 'update']);
-    $router->delete($api . '/customers/{id}', [CustomerController::class, 'delete']);
+    // Customers (auth required)
+    $router->get($api . '/customers', [CustomerController::class, 'getAll'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/customers/{id}', [CustomerController::class, 'get'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/customers', [CustomerController::class, 'create'], [WebHatcheryJwtMiddleware::class]);
+    $router->put($api . '/customers/{id}', [CustomerController::class, 'update'], [WebHatcheryJwtMiddleware::class]);
+    $router->delete($api . '/customers/{id}', [CustomerController::class, 'delete'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/customers/current/{user_id}', [CustomerController::class, 'getCurrentCustomer'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/customers/generate', [CustomerController::class, 'generateCustomer'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/customers/sell', [CustomerController::class, 'sellItem'], [WebHatcheryJwtMiddleware::class]);
@@ -143,8 +142,8 @@ return function (Router $router): void {
     $router->post($api . '/crafting/craft', [CraftingController::class, 'craft'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/crafting/history/{user_id}', [CraftingController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
 
-    // Upgrades
-    $router->get($api . '/upgrades', [UpgradeController::class, 'getAll']);
+    // Upgrades (auth required)
+    $router->get($api . '/upgrades', [UpgradeController::class, 'getAll'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/upgrades/purchased', [UpgradeController::class, 'getPurchased'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/upgrades/purchase', [UpgradeController::class, 'purchase'], [WebHatcheryJwtMiddleware::class]);
 
@@ -152,99 +151,8 @@ return function (Router $router): void {
     $router->post($api . '/minigames/play', [MiniGameController::class, 'play'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/minigames/history/{user_id}', [MiniGameController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
 
-    // Auth session
-    $router->get($api . '/auth/session', function ($request, $response) {
-        $authHeader = $request->getHeaderLine('Authorization');
-        $token = null;
-        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $secret = $_ENV['JWT_SECRET'] ?? '';
-        $debugPayload = [
-            'authorization_header_present' => $authHeader ? true : false,
-            'bearer_token_parsed' => $token ? true : false,
-            'jwt_secret_set' => $secret !== '' ? true : false,
-            'request_uri' => $request->getUri() ?? '',
-            'content_type' => $request->getHeaderLine('Content-Type') ?: '',
-            'server_auth_header_present' => [
-                'HTTP_AUTHORIZATION' => isset($_SERVER['HTTP_AUTHORIZATION']) && $_SERVER['HTTP_AUTHORIZATION'] !== '',
-                'REDIRECT_HTTP_AUTHORIZATION' => isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] !== '',
-                'AUTHORIZATION' => isset($_SERVER['AUTHORIZATION']) && $_SERVER['AUTHORIZATION'] !== '',
-            ],
-            'server_auth_header_values' => [
-                'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
-                'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
-                'AUTHORIZATION' => $_SERVER['AUTHORIZATION'] ?? null,
-            ],
-            'request_headers_keys' => array_keys($_SERVER),
-        ];
-        $includeDebug = true;
-        if (!$token || !$secret) {
-            $payload = [
-                'success' => false,
-                'message' => 'Unauthorized'
-            ];
-            if ($includeDebug) {
-                $payload['debug'] = $debugPayload;
-            }
-            $response->getBody()->write(json_encode($payload));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
-        }
-
-        try {
-            $decoded = JWT::decode($token, new Key($secret, 'HS256'));
-            $userId = $decoded->user_id ?? $decoded->sub ?? null;
-            $email = $decoded->email ?? '';
-            $role = $decoded->role ?? null;
-            $username = $decoded->username ?? ($email !== '' ? explode('@', $email)[0] : 'user');
-
-            $container = \App\Utils\ContainerConfig::createContainer();
-            $authRepo = $container->get(\App\Repositories\AuthRepository::class);
-            $profileRepo = $container->get(\App\Repositories\BlacksmithProfileRepository::class);
-            $authRepo->upsertWebHatcheryUser((int) $userId, $email, $username);
-            $profileModel = $profileRepo->findByUserId((int) $userId);
-            if (!$profileModel) {
-                $profileModel = $profileRepo->createDefaultProfile((int) $userId, ucfirst($username) . ' Forge');
-            }
-
-            $profile = [
-                'forge_name' => $profileModel->forge_name,
-                'level' => $profileModel->level,
-                'reputation' => $profileModel->reputation,
-                'coins' => $profileModel->coins,
-            ];
-
-            $payload = [
-                'success' => true,
-                'data' => [
-                    'user' => [
-                        'id' => (int) $userId,
-                        'email' => $email,
-                        'username' => $username,
-                        'role' => $role,
-                    ],
-                    'profile' => $profile,
-                ],
-            ];
-            if ($includeDebug) {
-                $payload['debug'] = $debugPayload;
-            }
-            $response->getBody()->write(json_encode($payload));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $debugPayload['jwt_error'] = $e->getMessage();
-            $payload = [
-                'success' => false,
-                'message' => 'Invalid token'
-            ];
-            if ($includeDebug) {
-                $payload['debug'] = $debugPayload;
-            }
-            $response->getBody()->write(json_encode($payload));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
-        }
-    });
+    // Auth session (auth required)
+    $router->get($api . '/auth/session', [AuthController::class, 'session'], [WebHatcheryJwtMiddleware::class]);
 
     // Health and ping
     $router->get($api . '/health', $healthHandler);
