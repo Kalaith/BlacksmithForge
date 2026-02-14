@@ -1,0 +1,46 @@
+=== blacksmith_forge\frontend ===
+
+> frontend@1.0.0 type-check
+> tsc --noEmit
+
+src/api/index.ts(1,30): error TS2307: Cannot find module './services/materials' or its corresponding type declarations.
+src/api/index.ts(3,30): error TS2307: Cannot find module './services/customers' or its corresponding type declarations.
+src/api/index.ts(4,30): error TS2307: Cannot find module './services/inventory' or its corresponding type declarations.
+src/api/index.ts(5,29): error TS2307: Cannot find module './services/crafting' or its corresponding type declarations.
+src/api/index.ts(6,29): error TS2307: Cannot find module './services/upgrades' or its corresponding type declarations.
+src/api/index.ts(7,30): error TS2307: Cannot find module './services/minigames' or its corresponding type declarations.
+src/api/index.ts(8,25): error TS2307: Cannot find module './services/auth' or its corresponding type declarations.
+src/api/index.ts(11,15): error TS2307: Cannot find module './services/materials' or its corresponding type declarations.
+src/api/index.ts(13,15): error TS2307: Cannot find module './services/customers' or its corresponding type declarations.
+src/api/index.ts(14,15): error TS2307: Cannot find module './services/inventory' or its corresponding type declarations.
+src/api/index.ts(15,15): error TS2307: Cannot find module './services/crafting' or its corresponding type declarations.
+src/api/index.ts(16,15): error TS2307: Cannot find module './services/upgrades' or its corresponding type declarations.
+src/api/index.ts(17,15): error TS2307: Cannot find module './services/minigames' or its corresponding type declarations.
+src/api/index.ts(18,15): error TS2307: Cannot find module './services/auth' or its corresponding type declarations.
+src/api/services/health.ts(1,10): error TS2724: '"../client"' has no exported member named 'API_BASE_URL'. Did you mean 'apiBaseUrl'?
+src/api/transforms.ts(14,5): error TS2322: Type 'unknown' is not assignable to type 'number'.
+src/api/transforms.ts(21,5): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/api/transforms.ts(24,5): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/components/features/MaterialCard.tsx(3,10): error TS2724: '"../../constants/gameConfig"' has no exported member named 'MATERIAL_BUY_QUANTITIES'. Did you mean 'materialBuyQuantities'?
+src/components/features/MaterialsTab.tsx(6,10): error TS2724: '"../../api/api"' has no exported member named 'materialsAPI'. Did you mean 'Material'?
+src/components/features/MaterialsTab.tsx(64,15): error TS2322: Type 'unknown' is not assignable to type 'number'.
+src/components/features/RecipesTab.tsx(6,10): error TS2724: '"../../api/api"' has no exported member named 'materialsAPI'. Did you mean 'Material'?
+src/components/features/UpgradesTab.tsx(6,10): error TS2614: Module '"../../api/api"' has no exported member 'upgradesAPI'. Did you mean to use 'import upgradesAPI from "../../api/api"' instead?
+src/components/features/UpgradesTab.tsx(99,21): error TS2365: Operator '<' cannot be applied to types 'unknown' and 'number'.
+src/components/features/UpgradesTab.tsx(101,25): error TS2365: Operator '<' cannot be applied to types 'unknown' and 'number'.
+src/components/layout/GameHeader.tsx(20,42): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/layout/GameHeader.tsx(24,42): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/layout/GameHeader.tsx(28,42): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/layout/GameHeader.tsx(37,39): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/layout/GameHeader.tsx(38,40): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/hooks/useAPI.ts(3,3): error TS2724: '"../api/api"' has no exported member named 'materialsAPI'. Did you mean 'Material'?
+src/hooks/useAPI.ts(5,3): error TS2724: '"../api/api"' has no exported member named 'customersAPI'. Did you mean 'Customer'?
+src/hooks/useAPI.ts(6,3): error TS2614: Module '"../api/api"' has no exported member 'upgradesAPI'. Did you mean to use 'import upgradesAPI from "../api/api"' instead?
+src/hooks/useCrafting.ts(2,10): error TS2614: Module '"../api/api"' has no exported member 'craftingAPI'. Did you mean to use 'import craftingAPI from "../api/api"' instead?
+src/hooks/useCrafting.ts(2,23): error TS2614: Module '"../api/api"' has no exported member 'inventoryAPI'. Did you mean to use 'import inventoryAPI from "../api/api"' instead?
+src/hooks/useCustomerActions.ts(2,10): error TS2724: '"../api/api"' has no exported member named 'customersAPI'. Did you mean 'Customer'?
+src/hooks/useCustomerActions.ts(2,24): error TS2614: Module '"../api/api"' has no exported member 'inventoryAPI'. Did you mean to use 'import inventoryAPI from "../api/api"' instead?
+src/hooks/useForge.ts(2,10): error TS2614: Module '"../api/api"' has no exported member 'craftingAPI'. Did you mean to use 'import craftingAPI from "../api/api"' instead?
+src/hooks/useMaterials.ts(2,10): error TS2724: '"../api/api"' has no exported member named 'materialsAPI'. Did you mean 'Material'?
+src/hooks/useMaterials.ts(2,24): error TS2614: Module '"../api/api"' has no exported member 'inventoryAPI'. Did you mean to use 'import inventoryAPI from "../api/api"' instead?
+
