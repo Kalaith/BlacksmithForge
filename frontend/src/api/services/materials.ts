@@ -1,5 +1,6 @@
 import { MATERIALS } from '../../constants/gameData';
 import { Material } from '../../types/game.d';
+import { getActiveUserId } from '../../auth/storage';
 
 const getKey = (userId: number) => `bf_materials_${userId}`;
 
@@ -44,18 +45,7 @@ export const materialsAPI = {
   },
 
   async purchaseMaterial(materialId: number, quantity: number): Promise<boolean> {
-    const authRaw = localStorage.getItem('auth-storage');
-    if (!authRaw) return false;
-
-    let userId = 0;
-    try {
-      const parsed = JSON.parse(authRaw) as {
-        state?: { user?: { id?: number | string } };
-      };
-      userId = Number(parsed.state?.user?.id ?? 0);
-    } catch {
-      return false;
-    }
+    const userId = getActiveUserId();
 
     if (!userId || quantity <= 0) return false;
     const material = withIds().find(m => m.id === materialId);

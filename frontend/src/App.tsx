@@ -16,10 +16,12 @@ import CustomersPage from './pages/CustomersPage';
 import UpgradesPage from './pages/UpgradesPage';
 import ExportImportModal from './components/ui/ExportImportModal';
 import AchievementsPanel from './components/ui/AchievementsPanel';
+import { useAuthContext } from './providers/GameDataProvider';
 
 type TabKey = 'forge' | 'recipes' | 'materials' | 'customers' | 'upgrades';
 
 const App: React.FC = () => {
+  const { user, loading, error, continueAsGuest, getLinkAccountUrl } = useAuthContext();
   const [activeTab, setActiveTab] = useState<TabKey>('forge');
   const [showExportImport, setShowExportImport] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
@@ -44,6 +46,35 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="game-container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="panel-card">Loading forge session...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    const loginUrl = getLinkAccountUrl();
+    return (
+      <div className="game-container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '2rem' }}>
+        <div className="panel-card" style={{ maxWidth: '40rem', width: '100%' }}>
+          <h1>Blacksmith's Forge</h1>
+          <p>Start forging as a guest, or sign in with WebHatchery to keep your forge tied to your account.</p>
+          {error ? <p style={{ color: '#fecaca' }}>{error}</p> : null}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+            <button onClick={() => void continueAsGuest()} className="btn btn-primary">
+              Continue as Guest
+            </button>
+            <a href={loginUrl} className="btn btn-secondary">
+              Login with WebHatchery
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <GameLayout>

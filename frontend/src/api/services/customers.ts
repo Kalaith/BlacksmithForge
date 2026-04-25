@@ -2,6 +2,7 @@ import { CUSTOMERS } from '../../constants/gameData';
 import { CustomerInteraction, SaleResult, SellingPriceInfo } from '../../types';
 import { Customer } from '../../types/game.d';
 import { inventoryAPI } from './inventory';
+import { getActiveUserId } from '../../auth/storage';
 
 const currentCustomerKey = 'bf_current_customer';
 
@@ -23,17 +24,6 @@ const toInteraction = (index: number) =>
     created_at: new Date().toISOString(),
   }) satisfies CustomerInteraction;
 
-const getAuthedUserId = (): number => {
-  try {
-    const raw = localStorage.getItem('auth-storage');
-    if (!raw) return 0;
-    const parsed = JSON.parse(raw) as { state?: { user?: { id?: number } } };
-    return Number(parsed.state?.user?.id ?? 0);
-  } catch {
-    return 0;
-  }
-};
-
 export const customersAPI = {
   async getAll(): Promise<Customer[]> {
     return CUSTOMERS;
@@ -50,7 +40,7 @@ export const customersAPI = {
   },
 
   async generateCustomer(): Promise<CustomerInteraction | null> {
-    const userId = getAuthedUserId();
+    const userId = getActiveUserId();
     if (!userId) return null;
     const pick = Math.floor(Math.random() * CUSTOMERS.length);
     const customer = { ...toInteraction(pick), user_id: userId };
@@ -91,7 +81,7 @@ export const customersAPI = {
   },
 
   async sellItem(payload: { itemId: number; customerId: number }): Promise<SaleResult | null> {
-    const userId = getAuthedUserId();
+    const userId = getActiveUserId();
     if (!userId) return null;
     const pricing = await this.getSellingPrice(userId, payload.itemId, payload.customerId);
     if (!pricing.can_afford) return null;
@@ -110,7 +100,7 @@ export const customersAPI = {
   },
 
   async dismissCustomer(): Promise<boolean> {
-    const userId = getAuthedUserId();
+    const userId = getActiveUserId();
     if (!userId) return false;
     localStorage.removeItem(`${currentCustomerKey}_${userId}`);
     return true;

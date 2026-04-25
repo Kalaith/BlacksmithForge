@@ -91,6 +91,31 @@ class AuthRepository extends BaseRepository
         ];
     }
 
+    public function createGuestUser(string $username): array
+    {
+        $candidate = $username;
+        $attempt = 0;
+
+        while ($this->usernameExists($candidate)) {
+            $attempt++;
+            $candidate = $username . '_' . $attempt;
+        }
+
+        $id = $this->create([
+            'username' => $candidate,
+            'password' => null,
+            'email' => '',
+            'auth_provider' => 'guest',
+        ]);
+
+        return $this->find($id) ?: [
+            'id' => $id,
+            'username' => $candidate,
+            'email' => '',
+            'auth_provider' => 'guest',
+        ];
+    }
+
     /**
      * Check if username exists
      */

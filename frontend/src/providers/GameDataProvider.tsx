@@ -1,15 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useGameData, useAuth } from '../hooks/useAPI';
 import { Material, Recipe, Customer, ForgeUpgrade } from '../types/game.d';
-
-type AuthUser = {
-  id: number;
-  username?: string;
-  email?: string;
-  [key: string]: unknown;
-};
-
-type AuthProfile = Record<string, unknown>;
+import type { AuthProfile, AuthUser } from '../auth/storage';
 
 interface GameDataContextType {
   materials: Material[];
@@ -30,6 +22,9 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<unknown>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  continueAsGuest: () => Promise<void>;
+  getLinkAccountUrl: () => string;
+  authMode: 'frontpage' | 'guest' | null;
   isAuthenticated: boolean;
 }
 
@@ -41,8 +36,8 @@ interface GameDataProviderProps {
 }
 
 export function GameDataProvider({ children }: GameDataProviderProps) {
-  const gameData = useGameData();
   const auth = useAuth() as AuthContextType;
+  const gameData = useGameData(auth.isAuthenticated);
 
   return (
     <AuthContext.Provider value={auth}>

@@ -26,14 +26,15 @@ class WebHatcheryJwtMiddleware
 
         try {
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
+            $isGuest = (bool) ($decoded->is_guest ?? false);
 
             $expectedIssuer = $_ENV['JWT_ISSUER'] ?? 'webhatchery';
-            if (isset($decoded->iss) && $decoded->iss !== $expectedIssuer) {
+            if (!$isGuest && isset($decoded->iss) && $decoded->iss !== $expectedIssuer) {
                 return $this->unauthorized($response, 'Invalid token issuer');
             }
 
             $expectedAudience = $_ENV['JWT_AUDIENCE'] ?? ($_ENV['APP_URL'] ?? null);
-            if ($expectedAudience && isset($decoded->aud)) {
+            if (!$isGuest && $expectedAudience && isset($decoded->aud)) {
                 $aud = $decoded->aud;
                 $isValidAudience = is_array($aud) ? in_array($expectedAudience, $aud, true) : $aud === $expectedAudience;
                 if (!$isValidAudience) {
@@ -51,6 +52,11 @@ class WebHatcheryJwtMiddleware
                 'email' => $decoded->email ?? null,
                 'username' => $decoded->username ?? null,
                 'roles' => $decoded->roles ?? [],
+                'role' => $decoded->role ?? (($decoded->roles[0] ?? null) ?: 'user'),
+                'display_name' => $decoded->display_name ?? $decoded->username ?? null,
+                'auth_type' => $decoded->auth_type ?? ($isGuest ? 'guest' : 'frontpage'),
+                'is_guest' => $isGuest,
+                'guest_user_id' => $decoded->guest_user_id ?? null,
             ]);
 
             return $request;
@@ -64,6 +70,7 @@ class WebHatcheryJwtMiddleware
         $response->getBody()->write(json_encode([
             'success' => false,
             'message' => $message,
+            'login_url' => $_ENV['LOGIN_URL'] ?? ($_ENV['WEB_HATCHERY_LOGIN_URL'] ?? ''),
         ]));
         return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
     }

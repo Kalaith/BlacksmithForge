@@ -155,11 +155,12 @@ class ContainerConfig
             
             // Controllers
             \App\Controllers\AuthController::class => function (
+                \PDO $pdo,
                 AuthRepository $authRepo,
                 BlacksmithProfileRepository $profileRepo,
                 AuthService $authService
             ) {
-                return new \App\Controllers\AuthController($authRepo, $profileRepo, $authService);
+                return new \App\Controllers\AuthController($pdo, $authRepo, $profileRepo, $authService);
             },
             
             \App\Controllers\MaterialController::class => function (MaterialService $materialService) {

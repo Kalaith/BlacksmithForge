@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuthContext } from '../../providers/GameDataProvider';
 
 const GameHeader: React.FC = () => {
-  const { user, profile, isAuthenticated } = useAuthContext();
+  const { user, profile, isAuthenticated, authMode, getLinkAccountUrl } = useAuthContext();
 
   const displayName = user?.username || user?.email || 'Unknown User';
   const forgeName = String(profile?.forge_name ?? 'Forge');
@@ -30,10 +30,15 @@ const GameHeader: React.FC = () => {
         </div>
         <div className="user-status">
           <span className={`user-badge ${isAuthenticated ? 'user-badge--ok' : 'user-badge--warn'}`}>
-            {isAuthenticated ? 'Authenticated' : 'Not Logged In'}
+            {isAuthenticated ? (authMode === 'guest' ? 'Guest Session' : 'Authenticated') : 'Not Logged In'}
           </span>
           <span className="user-name">{displayName}</span>
           <span className="user-forge">{forgeName}</span>
+          {user?.is_guest ? (
+            <a className="user-forge" href={getLinkAccountUrl()}>
+              Link Account
+            </a>
+          ) : null}
         </div>
       </div>
     </header>

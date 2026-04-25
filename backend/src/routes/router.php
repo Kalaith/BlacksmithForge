@@ -151,8 +151,10 @@ return function (Router $router): void {
     $router->post($api . '/minigames/play', [MiniGameController::class, 'play'], [WebHatcheryJwtMiddleware::class]);
     $router->get($api . '/minigames/history/{user_id}', [MiniGameController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
 
-    // Auth session (auth required)
+    // Auth endpoints
     $router->get($api . '/auth/session', [AuthController::class, 'session'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/auth/guest-session', [AuthController::class, 'guestSession']);
+    $router->post($api . '/auth/link-guest', [AuthController::class, 'linkGuest'], [WebHatcheryJwtMiddleware::class]);
 
     // Health and ping
     $router->get($api . '/health', $healthHandler);

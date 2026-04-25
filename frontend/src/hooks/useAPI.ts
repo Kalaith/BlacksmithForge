@@ -2,20 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import api, { materialsAPI, recipesAPI, customersAPI, upgradesAPI } from '../api/api';
 import { Material, Recipe, Customer, ForgeUpgrade } from '../types/game.d';
 import { InventoryItem } from '../types/inventory';
+import {
+  AuthProfile,
+  AuthUser,
+  clearGuestSession,
+  getFrontpageToken,
+  getGuestSession,
+  saveGuestSession,
+} from '../auth/storage';
 
-type AuthUser = {
-  id: number;
-  username?: string;
-  email?: string;
-  [key: string]: unknown;
-};
-
-type AuthProfile = Record<string, unknown>;
 type CraftingHistoryEntry = Record<string, unknown>;
 type CraftingMaterialsPayload = Array<Record<string, unknown>>;
 
-// Custom hook for loading game data
-export function useGameData() {
+export function useGameData(enabled: boolean) {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -28,13 +27,11 @@ export function useGameData() {
     setError(null);
 
     try {
-      // Check backend health first
       const isHealthy = await api.health.check();
       if (!isHealthy) {
         throw new Error('Backend is not available');
       }
 
-      // Load all game data in parallel
       const [materialsData, recipesData, customersData, upgradesData] = await Promise.all([
         materialsAPI.getAll(),
         recipesAPI.getAll(),
@@ -49,8 +46,6 @@ export function useGameData() {
     } catch (err) {
       console.error('Failed to load game data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load game data');
-
-      // Fallback to hardcoded data if backend is unavailable
       await loadFallbackData();
     } finally {
       setLoading(false);
@@ -58,10 +53,8 @@ export function useGameData() {
   }, []);
 
   const loadFallbackData = async () => {
-    // Import the original gameData as fallback
     try {
-      const { MATERIALS, RECIPES, CUSTOMERS, forgeUpgrades } =
-        await import('../constants/gameData');
+      const { MATERIALS, RECIPES, CUSTOMERS, forgeUpgrades } = await import('../constants/gameData');
       setMaterials(MATERIALS);
       setRecipes(RECIPES);
       setCustomers(CUSTOMERS);
@@ -73,8 +66,10 @@ export function useGameData() {
   };
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (enabled) {
+      loadData();
+    }
+  }, [enabled, loadData]);
 
   return {
     materials,
@@ -87,7 +82,6 @@ export function useGameData() {
   };
 }
 
-// Custom hook for materials management
 export function useMaterials() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,7 +140,6 @@ export function useMaterials() {
   };
 }
 
-// Custom hook for recipes management
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
@@ -177,12 +170,53 @@ export function useRecipes() {
   };
 }
 
-// Custom hook for user authentication
+const migrateGuestLocalState = (guestUserId: number, targetUserId: number): void => {
+  const keyPairs = [
+    [`bf_materials_${guestUserId}`, `bf_materials_${targetUserId}`],
+    [`bf_inventory_${guestUserId}`, `bf_inventory_${targetUserId}`],
+    [`bf_current_customer_${guestUserId}`, `bf_current_customer_${targetUserId}`],
+  ];
+
+  keyPairs.forEach(([guestKey, targetKey]) => {
+    const guestRaw = localStorage.getItem(guestKey);
+    if (!guestRaw) {
+      return;
+    }
+
+    const targetRaw = localStorage.getItem(targetKey);
+    if (!targetRaw) {
+      localStorage.setItem(targetKey, guestRaw);
+    } else {
+      try {
+        const guestParsed = JSON.parse(guestRaw);
+        const targetParsed = JSON.parse(targetRaw);
+
+        if (Array.isArray(guestParsed) && Array.isArray(targetParsed)) {
+          localStorage.setItem(targetKey, JSON.stringify([...targetParsed, ...guestParsed]));
+        } else if (
+          guestParsed &&
+          typeof guestParsed === 'object' &&
+          targetParsed &&
+          typeof targetParsed === 'object'
+        ) {
+          localStorage.setItem(targetKey, JSON.stringify({ ...guestParsed, ...targetParsed }));
+        }
+      } catch {
+        localStorage.setItem(targetKey, guestRaw);
+      }
+    }
+
+    localStorage.removeItem(guestKey);
+  });
+};
+
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginUrl, setLoginUrl] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'frontpage' | 'guest' | null>(null);
 
   const register = useCallback(async (_username: string, _password: string) => {
     setLoading(true);
@@ -215,7 +249,8 @@ export function useAuth() {
     try {
       setUser(null);
       setProfile(null);
-      localStorage.removeItem('auth-storage');
+      setAuthMode(null);
+      clearGuestSession();
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
@@ -226,28 +261,119 @@ export function useAuth() {
   const loadSession = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const session = await api.auth.session();
-      if (session) {
-        setUser(session.user);
-        setProfile(session.profile);
-      } else {
-        setUser(null);
-        setProfile(null);
+      const params = new URLSearchParams(window.location.search);
+      const linkingGuestUserId = Number(params.get('guest_user_id') || '0');
+      const frontpageToken = getFrontpageToken();
+      const guestSession = getGuestSession();
+
+      if (linkingGuestUserId > 0 && frontpageToken) {
+        const linked = await api.auth.linkGuest(linkingGuestUserId, frontpageToken);
+        if (linked) {
+          migrateGuestLocalState(linkingGuestUserId, Number(linked.user.id));
+          clearGuestSession();
+          setUser(linked.user);
+          setProfile(linked.profile);
+          setAuthMode('frontpage');
+          params.delete('guest_user_id');
+          const nextQuery = params.toString();
+          window.history.replaceState({}, document.title, `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
+          setLoading(false);
+          return;
+        }
       }
+
+      if (guestSession?.token) {
+        const session = await api.auth.session(guestSession.token);
+        if (session) {
+          saveGuestSession({ token: guestSession.token, user: session.user, profile: session.profile });
+          setUser(session.user);
+          setProfile(session.profile);
+          setAuthMode('guest');
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (frontpageToken) {
+        const session = await api.auth.session(frontpageToken);
+        if (session) {
+          setUser(session.user);
+          setProfile(session.profile);
+          setAuthMode('frontpage');
+          setLoading(false);
+          return;
+        }
+      }
+
+      setUser(null);
+      setProfile(null);
+      setAuthMode(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load session');
       setUser(null);
       setProfile(null);
+      setAuthMode(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Check for existing user on mount
   useEffect(() => {
     loadSession();
   }, [loadSession]);
+
+  useEffect(() => {
+    const handleLoginRequired = (event: Event) => {
+      const customEvent = event as CustomEvent<{ loginUrl?: string }>;
+      setLoginUrl(customEvent.detail?.loginUrl ?? null);
+    };
+
+    window.addEventListener('webhatchery:login-required', handleLoginRequired as EventListener);
+    return () => window.removeEventListener('webhatchery:login-required', handleLoginRequired as EventListener);
+  }, []);
+
+  const continueAsGuest = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const session = await api.auth.guestSession();
+      if (!session) {
+        throw new Error('Failed to create guest session');
+      }
+
+      saveGuestSession({
+        token: session.token,
+        user: session.user,
+        profile: session.profile,
+      });
+      setUser(session.user);
+      setProfile(session.profile);
+      setAuthMode('guest');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create guest session');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getLinkAccountUrl = useCallback(() => {
+    const baseLoginUrl =
+      loginUrl ||
+      import.meta.env.VITE_WEB_HATCHERY_LOGIN_URL ||
+      import.meta.env.VITE_LOGIN_URL ||
+      '/login';
+
+    const url = new URL(baseLoginUrl, window.location.origin);
+    url.searchParams.set('return_to', window.location.href);
+
+    if (user?.is_guest && user.id) {
+      url.searchParams.set('guest_user_id', String(user.id));
+    }
+
+    return url.toString();
+  }, [loginUrl, user]);
 
   return {
     user,
@@ -258,11 +384,13 @@ export function useAuth() {
     login,
     logout,
     refreshSession: loadSession,
+    continueAsGuest,
+    getLinkAccountUrl,
+    authMode,
     isAuthenticated: !!user,
   };
 }
 
-// Custom hook for inventory management
 export function useInventory(userId?: number) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -290,7 +418,7 @@ export function useInventory(userId?: number) {
       try {
         const success = await api.inventory.addItem(userId, item);
         if (success) {
-          await loadInventory(); // Reload inventory after adding item
+          await loadInventory();
         }
         return success;
       } catch (err) {
@@ -308,7 +436,7 @@ export function useInventory(userId?: number) {
       try {
         const success = await api.inventory.removeItem(userId, item);
         if (success) {
-          await loadInventory(); // Reload inventory after removing item
+          await loadInventory();
         }
         return success;
       } catch (err) {
@@ -335,7 +463,6 @@ export function useInventory(userId?: number) {
   };
 }
 
-// Custom hook for crafting
 export function useCrafting(userId?: number) {
   const [craftingHistory, setCraftingHistory] = useState<CraftingHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -365,7 +492,6 @@ export function useCrafting(userId?: number) {
       try {
         const result = await api.crafting.craft({ recipeId, materials });
         if (result) {
-          // Reload crafting history after successful craft
           await loadHistory();
         }
         return result;

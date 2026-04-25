@@ -1,32 +1,66 @@
-type SessionResponse = {
-  user: { id: number; username?: string };
-  profile: { coins: number; level: number };
+import { apiBaseUrl } from '../client';
+import type { AuthProfile, AuthUser } from '../../auth/storage';
+
+export type SessionResponse = {
+  user: AuthUser;
+  profile: AuthProfile;
+};
+
+const parseJson = async <T>(response: Response): Promise<T> => {
+  return (await response.json()) as T;
 };
 
 export const authAPI = {
-  async session(): Promise<SessionResponse | null> {
-    const raw = localStorage.getItem('auth-storage');
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as {
-        state?: {
-          user?: { id?: number; username?: string };
-          profile?: { coins?: number; level?: number };
-        };
-      };
-      if (!parsed.state?.user?.id) return null;
-      return {
-        user: {
-          id: parsed.state.user.id,
-          username: parsed.state.user.username,
-        },
-        profile: {
-          coins: parsed.state.profile?.coins ?? 0,
-          level: parsed.state.profile?.level ?? 1,
-        },
-      };
-    } catch {
+  async session(token?: string): Promise<SessionResponse | null> {
+    const response = await fetch(`${apiBaseUrl}/auth/session`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    if (!response.ok) {
       return null;
     }
+
+    const payload = await parseJson<{ success: boolean; data?: SessionResponse }>(response);
+    return payload.data ?? null;
+  },
+
+  async guestSession(): Promise<{ token: string; user: AuthUser; profile: AuthProfile } | null> {
+    const response = await fetch(`${apiBaseUrl}/auth/guest-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseJson<{
+      success: boolean;
+      data?: { token: string; user: AuthUser; profile: AuthProfile };
+    }>(response);
+
+    return payload.data ?? null;
+  },
+
+  async linkGuest(guestUserId: number, token: string): Promise<SessionResponse | null> {
+    const response = await fetch(`${apiBaseUrl}/auth/link-guest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        guest_user_id: guestUserId,
+      }),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseJson<{ success: boolean; data?: SessionResponse }>(response);
+    return payload.data ?? null;
   },
 };

@@ -1,4 +1,5 @@
 import { ApiResponse } from './backendTypes';
+import { getActiveToken } from '../auth/storage';
 
 // API Configuration
 const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -17,16 +18,7 @@ export class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
 
     try {
-      const authStorageRaw = localStorage.getItem('auth-storage');
-      let storedToken: string | null = null;
-      if (authStorageRaw) {
-        try {
-          const parsed = JSON.parse(authStorageRaw);
-          storedToken = parsed?.state?.token ?? null;
-        } catch {
-          storedToken = null;
-        }
-      }
+      const storedToken = getActiveToken();
 
       const mergedHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
