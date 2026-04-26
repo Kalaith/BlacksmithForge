@@ -51,7 +51,11 @@ class BlacksmithProfileRepository extends BaseRepository
         ];
 
         $id = $this->create($data);
-        return new BlacksmithProfile(array_merge($data, ['id' => $id]));
+        return new BlacksmithProfile(array_merge($data, [
+            'id' => $id,
+            'crafting_mastery' => [],
+            'settings' => [],
+        ]));
     }
 
     public function updateLastSeen(int $userId): void

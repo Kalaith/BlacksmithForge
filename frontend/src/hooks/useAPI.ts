@@ -46,7 +46,9 @@ export function useGameData(enabled: boolean) {
     } catch (err) {
       console.error('Failed to load game data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load game data');
-      await loadFallbackData();
+      if (import.meta.env.VITE_ENABLE_FALLBACK === 'true') {
+        await loadFallbackData();
+      }
     } finally {
       setLoading(false);
     }
@@ -359,11 +361,10 @@ export function useAuth() {
   }, []);
 
   const getLinkAccountUrl = useCallback(() => {
-    const baseLoginUrl =
-      loginUrl ||
-      import.meta.env.VITE_WEB_HATCHERY_LOGIN_URL ||
-      import.meta.env.VITE_LOGIN_URL ||
-      '/login';
+    const baseLoginUrl = loginUrl || import.meta.env.VITE_WEB_HATCHERY_LOGIN_URL;
+    if (!baseLoginUrl) {
+      throw new Error('Missing required environment variable: VITE_WEB_HATCHERY_LOGIN_URL');
+    }
 
     const url = new URL(baseLoginUrl, window.location.origin);
     url.searchParams.set('return_to', window.location.href);

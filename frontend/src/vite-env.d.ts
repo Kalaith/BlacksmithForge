@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
+  readonly VITE_WEB_HATCHERY_LOGIN_URL: string;
   readonly VITE_ENV: string;
   readonly VITE_DEBUG: string;
   readonly VITE_ENABLE_FALLBACK: string;

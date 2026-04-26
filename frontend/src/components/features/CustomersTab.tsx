@@ -13,35 +13,36 @@ const CustomersTab: React.FC<CustomersTabProps> = ({ active }) => {
   return (
     <section id="customers-tab" className="tab-content active">
       <div className="customers-container">
-        <h2>👥 Customers</h2>
-        <p className="text-muted">
-          Customer transactions are handled by the backend. Browse available customer types below.
-        </p>
+        <div className="detail-heading">
+          <span>👥</span>
+          <div>
+            <h2>Customers</h2>
+            <p>Customer transactions are handled by the backend. Browse available customer types below.</p>
+          </div>
+        </div>
 
-        <div className="customers-grid">
+        <div className="customer-ledger">
           {customers.map((customer, idx) => (
-            <div key={`${customer.name}-${idx}`} className="customer-card">
-              <div className="customer-header">
-                <div className="customer-info">
-                  <span className="customer-icon">{customer.icon}</span>
-                  <div className="customer-details">
-                    <div className="customer-name">{customer.name}</div>
-                    <div className="customer-type">{customer.preferences}</div>
-                  </div>
+            <article key={`${customer.name}-${idx}`} className="customer-ledger-row">
+              <div className="customer-ledger-row__identity">
+                <span className="crest-icon customer-ledger-row__icon">{customer.icon}</span>
+                <div>
+                  <h3>{customer.name}</h3>
+                  <p>{customer.preferences}</p>
                 </div>
               </div>
 
-              <div className="customer-stats">
-                <div className="stat">
-                  <span className="stat-label">Budget:</span>
-                  <span className="stat-value">{customer.budget}g</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-label">Reputation:</span>
-                  <span className="stat-value">{customer.reputation}</span>
-                </div>
+              <div className="customer-ledger-row__stats">
+                <span>
+                  <small>Budget</small>
+                  {customer.budget}g
+                </span>
+                <span>
+                  <small>Reputation</small>
+                  {customer.reputation}
+                </span>
               </div>
-            </div>
+            </article>
           ))}
           {customers.length === 0 && <div className="no-customers">No customers available.</div>}
         </div>

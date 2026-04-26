@@ -2,9 +2,7 @@
 namespace App\Actions;
 
 use App\Services\CraftingService;
-use App\Services\InventoryService;
-use App\Services\MaterialService;
-use App\Services\RecipeService;
+use App\Utils\ContainerConfig;
 
 class CraftingActions {
     
@@ -13,7 +11,7 @@ class CraftingActions {
      */
     public static function startCrafting($userId, $recipeId) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $result = $craftingService->startCrafting($userId, $recipeId);
             
             return [
@@ -34,7 +32,7 @@ class CraftingActions {
      */
     public static function processHammerHit($userId, $craftingSessionId, $accuracy) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $result = $craftingService->processHammerHit($userId, $craftingSessionId, $accuracy);
             
             return [
@@ -55,7 +53,7 @@ class CraftingActions {
      */
     public static function completeCrafting($userId, $craftingSessionId, $totalAccuracy) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $result = $craftingService->completeCrafting($userId, $craftingSessionId, $totalAccuracy);
             
             return [
@@ -76,7 +74,7 @@ class CraftingActions {
      */
     public static function validateCrafting($userId, $recipeId) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $result = $craftingService->validateCrafting($userId, $recipeId);
             
             return [
@@ -97,7 +95,7 @@ class CraftingActions {
      */
     public static function getCraftingSession($userId, $craftingSessionId) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $result = $craftingService->getCraftingSession($userId, $craftingSessionId);
             
             return [
@@ -137,7 +135,7 @@ class CraftingActions {
      */
     public static function history($userId) {
         try {
-            $craftingService = new CraftingService();
+            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
             $history = $craftingService->getCraftingHistory($userId);
             
             return [

@@ -26,12 +26,22 @@ const RecipesTab: React.FC<RecipesTabProps> = ({ active }) => {
   return (
     <section id="recipes-tab" className="tab-content active">
       <div className="recipes-container">
-        <h2>📖 Recipe Book</h2>
-        <div className="recipes-grid">
-          {recipes.map(recipe => (
-            <RecipeCard key={recipe.name} recipe={recipe} userMaterials={userMaterials} />
-          ))}
+        <div className="detail-heading">
+          <span>📖</span>
+          <div>
+            <h2>Recipe Book</h2>
+            <p>Study proven patterns before you commit your materials to the fire.</p>
+          </div>
         </div>
+        {recipes.length > 0 ? (
+          <div className="recipe-book-grid">
+            {recipes.map(recipe => (
+              <RecipeCard key={recipe.name} recipe={recipe} userMaterials={userMaterials} />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">No recipes available.</div>
+        )}
       </div>
     </section>
   );

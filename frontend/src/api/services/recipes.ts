@@ -2,43 +2,37 @@ import { apiClient } from '../client';
 import { BackendRecipe, Recipe } from '../backendTypes';
 import { transformBackendRecipe } from '../transforms';
 
+const requireData = <T>(success: boolean, data: T | undefined, message?: string): T => {
+  if (!success || data === undefined) {
+    throw new Error(message || 'Backend request failed');
+  }
+  return data;
+};
+
+const uniqueRecipes = (recipes: Recipe[]): Recipe[] =>
+  Array.from(new Map(recipes.map(recipe => [recipe.name, recipe])).values());
+
 export const recipesAPI = {
   async getAll(): Promise<Recipe[]> {
-    try {
-      const response = await apiClient.get<BackendRecipe[]>('/recipes');
-      if (response.success && response.data) {
-        return response.data.map(transformBackendRecipe);
-      }
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch recipes:', error);
-      return [];
-    }
+    const response = await apiClient.get<BackendRecipe[]>('/recipes');
+    return uniqueRecipes(
+      requireData(response.success, response.data, response.message).map(transformBackendRecipe)
+    );
   },
 
   async getById(id: number): Promise<Recipe | null> {
-    try {
-      const response = await apiClient.get<BackendRecipe>(`/recipes/${id}`);
-      if (response.success && response.data) {
-        return transformBackendRecipe(response.data);
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to fetch recipe:', error);
+    const response = await apiClient.get<BackendRecipe>(`/recipes/${id}`);
+    if (!response.success || !response.data) {
       return null;
     }
+    return transformBackendRecipe(response.data);
   },
 
   async create(recipe: Partial<BackendRecipe>): Promise<Recipe | null> {
-    try {
-      const response = await apiClient.post<BackendRecipe>('/recipes', recipe);
-      if (response.success && response.data) {
-        return transformBackendRecipe(response.data);
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to create recipe:', error);
+    const response = await apiClient.post<BackendRecipe>('/recipes', recipe);
+    if (!response.success || !response.data) {
       return null;
     }
+    return transformBackendRecipe(response.data);
   },
 };

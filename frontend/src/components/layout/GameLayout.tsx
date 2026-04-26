@@ -1,7 +1,8 @@
 import React from 'react';
+import ForgeShell from './ForgeShell';
 
 const GameLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="game-container">{children}</div>
+  <ForgeShell>{children}</ForgeShell>
 );
 
 export default GameLayout;

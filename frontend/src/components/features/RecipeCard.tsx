@@ -7,25 +7,38 @@ interface RecipeCardProps {
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, userMaterials }) => (
-  <div className="recipe-card">
-    <div className="recipe-name">
-      {recipe.icon} {recipe.name}
-    </div>
-    <div className={`recipe-difficulty difficulty-${recipe.difficulty}`}>
-      {`Difficulty: ${'★'.repeat(recipe.difficulty)}`}
-    </div>
-    <div className="recipe-profit">Sell Price: {recipe.sellPrice}g</div>
-    <div className="required-materials">
-      {Object.entries(recipe.materials).map(([mat, qty]: [string, number]) => (
-        <div
-          key={mat}
-          className={`material-requirement${(userMaterials[mat] ?? 0) < qty ? ' insufficient' : ''}`}
-        >
-          {mat}: {qty} (Owned: {userMaterials[mat] ?? 0})
+  <article className="recipe-book-card">
+    <header className="recipe-book-card__header">
+      <div className="recipe-book-card__icon">{recipe.icon}</div>
+      <div>
+        <h3>{recipe.name}</h3>
+        <div className={`recipe-book-card__difficulty difficulty-${recipe.difficulty}`}>
+          {'★'.repeat(recipe.difficulty)}
         </div>
-      ))}
+      </div>
+      <div className="recipe-book-card__price">
+        <small>Sell Price</small>
+        {recipe.sellPrice}g
+      </div>
+    </header>
+    <div className="recipe-book-card__materials">
+      {Object.entries(recipe.materials).map(([mat, qty]: [string, number]) => {
+        const owned = userMaterials[mat] ?? 0;
+        const isInsufficient = owned < qty;
+        return (
+          <div
+            key={mat}
+            className={`recipe-book-card__material${isInsufficient ? ' is-missing' : ''}`}
+          >
+            <span>{mat}</span>
+            <strong>
+              {owned}/{qty}
+            </strong>
+          </div>
+        );
+      })}
     </div>
-  </div>
+  </article>
 );
 
 export default RecipeCard;

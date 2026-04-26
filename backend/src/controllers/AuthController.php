@@ -78,7 +78,7 @@ class AuthController {
             $response->getBody()->write(json_encode([
                 'success' => false,
                 'message' => 'Unauthorized',
-                'login_url' => $_ENV['LOGIN_URL'] ?? ($_ENV['WEB_HATCHERY_LOGIN_URL'] ?? ''),
+                'login_url' => $this->requiredEnv('LOGIN_URL'),
             ]));
             return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
@@ -130,18 +130,7 @@ class AuthController {
 
     public function guestSession(Request $request, Response $response, $args): Response
     {
-        $secret = $_ENV['JWT_SECRET']
-            ?? $_SERVER['JWT_SECRET']
-            ?? getenv('JWT_SECRET')
-            ?: '';
-
-        if ($secret === '') {
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'JWT secret not configured',
-            ]));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
+        $secret = $this->requiredEnv('JWT_SECRET');
 
         $guestBase = 'guest_' . strtolower(substr(bin2hex(random_bytes(3)), 0, 6));
         $user = $this->authRepository->createGuestUser($guestBase);
@@ -158,8 +147,8 @@ class AuthController {
             'roles' => ['guest'],
             'auth_type' => 'guest',
             'is_guest' => true,
-            'iss' => $_ENV['JWT_ISSUER'] ?? 'webhatchery',
-            'aud' => $_ENV['JWT_AUDIENCE'] ?? ($_ENV['APP_URL'] ?? null),
+            'iss' => $this->requiredEnv('JWT_ISSUER'),
+            'aud' => $this->requiredEnv('JWT_AUDIENCE'),
             'iat' => $issuedAt,
             'exp' => $issuedAt + (60 * 60 * 24 * 30),
         ], $secret, 'HS256');
@@ -191,7 +180,7 @@ class AuthController {
             $response->getBody()->write(json_encode([
                 'success' => false,
                 'message' => 'Unauthorized',
-                'login_url' => $_ENV['LOGIN_URL'] ?? ($_ENV['WEB_HATCHERY_LOGIN_URL'] ?? ''),
+                'login_url' => $this->requiredEnv('LOGIN_URL'),
             ]));
             return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
@@ -385,5 +374,14 @@ class AuthController {
 
         $stmt = $this->pdo->prepare("UPDATE {$table} SET user_id = ? WHERE user_id = ?");
         $stmt->execute([$targetUserId, $guestUserId]);
+    }
+
+    private function requiredEnv(string $name): string
+    {
+        $value = $_ENV[$name] ?? '';
+        if ($value === '') {
+            throw new \RuntimeException("Missing required environment variable: {$name}");
+        }
+        return $value;
     }
 }

@@ -2,7 +2,10 @@ import axios from 'axios';
 import { getActiveToken, persistLoginUrl } from '../auth/storage';
 
 // Determine the base URL from the environment or use a relative path
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const BASE_URL = import.meta.env.VITE_API_URL;
+if (!BASE_URL) {
+    throw new Error('Missing required environment variable: VITE_API_URL');
+}
 
 /**
  * Standardized Web Hatchery Axios Instance

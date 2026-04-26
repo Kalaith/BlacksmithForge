@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="fire" cx="82%" cy="70%" r="35%">
+      <stop offset="0%" stop-color="#f08a24"/>
+      <stop offset="32%" stop-color="#6b2d12"/>
+      <stop offset="100%" stop-color="#080604"/>
+    </radialGradient>
+    <linearGradient id="room" x1="0" x2="1">
+      <stop offset="0%" stop-color="#15100b"/>
+      <stop offset="55%" stop-color="#0b0907"/>
+      <stop offset="100%" stop-color="#020202"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#room)"/>
+  <rect width="1920" height="1080" fill="url(#fire)" opacity=".75"/>
+  <g opacity=".18" stroke="#7b5130" stroke-width="10">
+    <path d="M0 190h1920M0 360h1920M0 530h1920"/>
+    <path d="M1220 0v1080M1510 0v1080"/>
+  </g>
+  <g opacity=".35">
+    <circle cx="1550" cy="790" r="160" fill="#f28a24"/>
+    <circle cx="1550" cy="790" r="260" fill="#5b240d"/>
+  </g>
+</svg>

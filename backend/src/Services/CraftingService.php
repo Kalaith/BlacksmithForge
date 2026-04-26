@@ -238,7 +238,8 @@ class CraftingService
     public function validateCrafting(int $userId, int $recipeId): array
     {
         try {
-            $recipe = $this->recipeRepository->findById($recipeId);
+            $recipeModel = $this->recipeRepository->findRecipe($recipeId);
+            $recipe = $recipeModel ? $recipeModel->toArray() : null;
             if (!$recipe) {
                 return [
                     'can_craft' => false,
@@ -352,7 +353,8 @@ class CraftingService
 
     private function getRecipeOrFail(int $recipeId): array
     {
-        $recipe = $this->recipeRepository->findById($recipeId);
+        $recipeModel = $this->recipeRepository->findRecipe($recipeId);
+        $recipe = $recipeModel ? $recipeModel->toArray() : null;
         if (!$recipe) {
             throw new \InvalidArgumentException('Recipe not found');
         }

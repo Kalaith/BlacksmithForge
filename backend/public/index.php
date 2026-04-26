@@ -1,7 +1,7 @@
 <?php
 
 // Local autoloader for deployed API src (avoid central autoload mapping collisions)
-spl_autoload_register(function (string $class): void {
+$localAutoloader = function (string $class): void {
     $prefix = 'App\\';
     $baseDir = __DIR__ . '/../src/';
     if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
@@ -12,14 +12,17 @@ spl_autoload_register(function (string $class): void {
     if (file_exists($file)) {
         require $file;
     }
-});
+};
+spl_autoload_register($localAutoloader, true, true);
 
 $centralAutoload = __DIR__ . '/../../../vendor/autoload.php';
 if (!file_exists($centralAutoload)) {
     throw new \RuntimeException('Central vendor autoload not found at ' . $centralAutoload);
 }
 $loader = require $centralAutoload;
-$loader->addPsr4('App\\', __DIR__ . '/../src/', true);
+$loader->setPsr4('App\\', [__DIR__ . '/../src/']);
+spl_autoload_unregister($localAutoloader);
+spl_autoload_register($localAutoloader, true, true);
 
 use Dotenv\Dotenv;
 use App\External\DatabaseService;
@@ -35,9 +38,20 @@ $dotenv = Dotenv::createImmutable($dotenvPath);
 $dotenv->load();
 
 // Add required environment variables
-$required_env_vars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+$required_env_vars = [
+    'DB_HOST',
+    'DB_PORT',
+    'DB_NAME',
+    'DB_USER',
+    'DB_PASSWORD',
+    'APP_BASE_PATH',
+    'LOGIN_URL',
+    'JWT_SECRET',
+    'JWT_ISSUER',
+    'JWT_AUDIENCE',
+];
 foreach ($required_env_vars as $var) {
-    if (!isset($_ENV[$var])) {
+    if (!isset($_ENV[$var]) || $_ENV[$var] === '') {
         throw new \RuntimeException("Missing required environment variable: {$var}");
     }
 }
@@ -51,26 +65,8 @@ $db = DatabaseService::getInstance();
 // Router (Anime Prompt Gen pattern)
 $router = new Router($container);
 
-// Set base path for subdirectory deployment
-if (isset($_ENV['APP_BASE_PATH']) && $_ENV['APP_BASE_PATH']) {
-    $router->setBasePath(rtrim($_ENV['APP_BASE_PATH'], '/'));
-} else {
-    $requestPath = $_SERVER['REQUEST_URI'] ?? '';
-    $requestPath = parse_url($requestPath, PHP_URL_PATH) ?? '';
-    $apiPos = strpos($requestPath, '/api/v1');
-    if ($apiPos !== false) {
-        $basePath = substr($requestPath, 0, $apiPos);
-        if ($basePath !== '') {
-            $router->setBasePath($basePath);
-        }
-    } elseif (isset($_SERVER['SCRIPT_NAME'])) {
-        $scriptName = $_SERVER['SCRIPT_NAME'];
-        $basePath = str_replace('/public/index.php', '', $scriptName);
-        if ($basePath !== $scriptName && $basePath !== '') {
-            $router->setBasePath($basePath);
-        }
-    }
-}
+// Set base path for subdirectory deployment.
+$router->setBasePath(rtrim($_ENV['APP_BASE_PATH'], '/'));
 
 // Handle CORS preflight
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {

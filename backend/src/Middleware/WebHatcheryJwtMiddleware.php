@@ -16,24 +16,18 @@ class WebHatcheryJwtMiddleware
         }
 
         $token = $matches[1];
-        $secret = $_ENV['JWT_SECRET']
-            ?? $_SERVER['JWT_SECRET']
-            ?? getenv('JWT_SECRET')
-            ?: '';
-        if ($secret === '') {
-            return $this->unauthorized($response, 'JWT secret not configured');
-        }
+        $secret = $this->requiredEnv('JWT_SECRET');
 
         try {
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
             $isGuest = (bool) ($decoded->is_guest ?? false);
 
-            $expectedIssuer = $_ENV['JWT_ISSUER'] ?? 'webhatchery';
+            $expectedIssuer = $this->requiredEnv('JWT_ISSUER');
             if (!$isGuest && isset($decoded->iss) && $decoded->iss !== $expectedIssuer) {
                 return $this->unauthorized($response, 'Invalid token issuer');
             }
 
-            $expectedAudience = $_ENV['JWT_AUDIENCE'] ?? ($_ENV['APP_URL'] ?? null);
+            $expectedAudience = $this->requiredEnv('JWT_AUDIENCE');
             if (!$isGuest && $expectedAudience && isset($decoded->aud)) {
                 $aud = $decoded->aud;
                 $isValidAudience = is_array($aud) ? in_array($expectedAudience, $aud, true) : $aud === $expectedAudience;
@@ -70,8 +64,17 @@ class WebHatcheryJwtMiddleware
         $response->getBody()->write(json_encode([
             'success' => false,
             'message' => $message,
-            'login_url' => $_ENV['LOGIN_URL'] ?? ($_ENV['WEB_HATCHERY_LOGIN_URL'] ?? ''),
+            'login_url' => $this->requiredEnv('LOGIN_URL'),
         ]));
         return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+    }
+
+    private function requiredEnv(string $name): string
+    {
+        $value = $_ENV[$name] ?? '';
+        if ($value === '') {
+            throw new \RuntimeException("Missing required environment variable: {$name}");
+        }
+        return $value;
     }
 }

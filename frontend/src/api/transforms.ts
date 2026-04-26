@@ -54,7 +54,7 @@ export function transformBackendCustomer(backendCustomer: BackendCustomer): Cust
     budget,
     preferences: backendCustomer.preferences || getCustomerPreferences(backendCustomer.order || ''),
     reputation: 0,
-    icon: backendCustomer.avatar || backendCustomer.icon || '👤',
+    icon: getCustomerIcon(backendCustomer),
   };
 }
 
@@ -109,4 +109,19 @@ function getCustomerPreferences(order: string): string {
   if (lowerOrder.includes('ring') || lowerOrder.includes('jewelry')) return 'value';
   if (lowerOrder.includes('crown') || lowerOrder.includes('royal')) return 'luxury';
   return 'balanced';
+}
+
+function getCustomerIcon(customer: BackendCustomer): string {
+  const icon = customer.avatar || customer.icon || '';
+  if (icon && !/^\?+$/.test(icon)) {
+    return icon;
+  }
+
+  const lowerName = customer.name.toLowerCase();
+  if (lowerName.includes('guard')) return '🛡️';
+  if (lowerName.includes('merchant')) return '💰';
+  if (lowerName.includes('knight')) return '👑';
+  if (lowerName.includes('warrior')) return '⚔️';
+  if (lowerName.includes('blacksmith')) return '🔨';
+  return '👤';
 }

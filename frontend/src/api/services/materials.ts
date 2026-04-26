@@ -1,59 +1,52 @@
-import { MATERIALS } from '../../constants/gameData';
 import { Material } from '../../types/game.d';
-import { getActiveUserId } from '../../auth/storage';
+import { BackendMaterial } from '../backendTypes';
+import { apiClient } from '../client';
+import { transformBackendMaterial } from '../transforms';
 
-const getKey = (userId: number) => `bf_materials_${userId}`;
-
-const withIds = (): Material[] => MATERIALS.map((m, index) => ({ ...m, id: m.id ?? index + 1 }));
-
-const readUserMaterials = (userId: number): Record<string, number> => {
-  const raw = localStorage.getItem(getKey(userId));
-  if (!raw) {
-    const initial: Record<string, number> = {};
-    withIds().forEach(m => {
-      initial[m.name] = 0;
-    });
-    return initial;
+const requireData = <T>(success: boolean, data: T | undefined, message?: string): T => {
+  if (!success || data === undefined) {
+    throw new Error(message || 'Backend request failed');
   }
-  try {
-    return JSON.parse(raw) as Record<string, number>;
-  } catch {
-    return {};
-  }
+  return data;
 };
 
-const writeUserMaterials = (userId: number, materials: Record<string, number>): void => {
-  localStorage.setItem(getKey(userId), JSON.stringify(materials));
-};
+const uniqueByName = (materials: Material[]): Material[] =>
+  Array.from(new Map(materials.map(material => [material.name, material])).values());
 
 export const materialsAPI = {
   async getAll(): Promise<Material[]> {
-    return withIds();
+    const response = await apiClient.get<BackendMaterial[]>('/materials');
+    return uniqueByName(
+      requireData(response.success, response.data, response.message).map(transformBackendMaterial)
+    );
   },
 
   async getByType(type: string): Promise<Material[]> {
-    const t = type.toLowerCase();
-    return withIds().filter(m => m.name.toLowerCase().includes(t));
+    const response = await apiClient.get<BackendMaterial[]>(`/materials/type/${encodeURIComponent(type)}`);
+    return uniqueByName(
+      requireData(response.success, response.data, response.message).map(transformBackendMaterial)
+    );
   },
 
   async getByRarity(rarity: string): Promise<Material[]> {
-    return withIds().filter(m => m.quality === rarity);
+    const response = await apiClient.get<BackendMaterial[]>(
+      `/materials/rarity/${encodeURIComponent(rarity)}`
+    );
+    return uniqueByName(
+      requireData(response.success, response.data, response.message).map(transformBackendMaterial)
+    );
   },
 
   async getUserMaterials(userId: number): Promise<Record<string, number>> {
-    return readUserMaterials(userId);
+    const response = await apiClient.get<Record<string, number>>(`/materials/user/${userId}`);
+    return requireData(response.success, response.data, response.message);
   },
 
   async purchaseMaterial(materialId: number, quantity: number): Promise<boolean> {
-    const userId = getActiveUserId();
-
-    if (!userId || quantity <= 0) return false;
-    const material = withIds().find(m => m.id === materialId);
-    if (!material) return false;
-
-    const current = readUserMaterials(userId);
-    current[material.name] = (current[material.name] ?? 0) + quantity;
-    writeUserMaterials(userId, current);
-    return true;
+    const response = await apiClient.post<unknown>('/materials/purchase', {
+      material_id: materialId,
+      quantity,
+    });
+    return response.success;
   },
 };

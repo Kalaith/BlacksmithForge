@@ -726,6 +726,32 @@ select.form-control {
   flex-direction: column;
 }
 
+.game-container--centered,
+.game-container--auth {
+  display: grid;
+  place-items: center;
+}
+
+.game-container--auth {
+  padding: var(--space-32);
+}
+
+.auth-card {
+  max-width: 40rem;
+  width: 100%;
+}
+
+.auth-error {
+  color: var(--color-error);
+}
+
+.auth-actions {
+  display: flex;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  margin-top: var(--space-16);
+}
+
 .game-header {
   background: var(--color-surface);
   border-bottom: 2px solid var(--color-border);
@@ -794,6 +820,31 @@ select.form-control {
 .user-forge {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.quick-actions {
+  display: flex;
+  gap: var(--space-8);
+  justify-content: flex-end;
+  padding: var(--space-8) var(--space-24) 0;
+  background: var(--color-surface);
+}
+
+.quick-actions button {
+  color: var(--color-btn-primary-text);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.quick-actions button:first-child {
+  background: var(--color-warning);
+}
+
+.quick-actions button:last-child {
+  background: var(--color-info);
 }
 
 .stat {
@@ -1153,6 +1204,14 @@ select.form-control {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-16);
+}
+
+.empty-state {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-base);
+  color: var(--color-text-secondary);
+  padding: var(--space-24);
+  text-align: center;
 }
 
 .material-card,
