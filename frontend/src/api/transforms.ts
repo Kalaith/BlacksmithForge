@@ -55,6 +55,7 @@ export function transformBackendCustomer(backendCustomer: BackendCustomer): Cust
     preferences: backendCustomer.preferences || getCustomerPreferences(backendCustomer.order || ''),
     reputation: 0,
     icon: getCustomerIcon(backendCustomer),
+    description: backendCustomer.description,
   };
 }
 

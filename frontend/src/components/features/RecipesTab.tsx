@@ -11,6 +11,7 @@ const RecipesTab: React.FC<RecipesTabProps> = ({ active }) => {
   const { recipes } = useGameDataContext();
   const { user, isAuthenticated } = useAuthContext();
   const [userMaterials, setUserMaterials] = useState<Record<string, number>>({});
+  const [craftMessage, setCraftMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserMaterials = async () => {
@@ -33,10 +34,19 @@ const RecipesTab: React.FC<RecipesTabProps> = ({ active }) => {
             <p>Study proven patterns before you commit your materials to the fire.</p>
           </div>
         </div>
+        {craftMessage ? <div className="status status--info recipe-craft-message">{craftMessage}</div> : null}
         {recipes.length > 0 ? (
           <div className="recipe-book-grid">
             {recipes.map(recipe => (
-              <RecipeCard key={recipe.name} recipe={recipe} userMaterials={userMaterials} />
+              <RecipeCard
+                key={recipe.name}
+                recipe={recipe}
+                userMaterials={userMaterials}
+                onCraftIntent={recipeName => {
+                  setCraftMessage(`${recipeName} is ready. Return to the Forge and pull the heat.`);
+                  window.setTimeout(() => setCraftMessage(null), 2400);
+                }}
+              />
             ))}
           </div>
         ) : (

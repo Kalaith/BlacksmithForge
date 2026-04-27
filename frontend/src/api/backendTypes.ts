@@ -45,6 +45,7 @@ export interface BackendCustomer {
   budget_max?: number;
   preferences?: string;
   icon?: string;
+  description?: string;
 }
 
 export interface BackendUser {

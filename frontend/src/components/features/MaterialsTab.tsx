@@ -12,6 +12,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
   const { user, profile, isAuthenticated, refreshSession } = useAuthContext();
   const [userMaterials, setUserMaterials] = useState<Record<string, number>>({});
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
+  const [recentPurchase, setRecentPurchase] = useState<number | null>(null);
 
   useEffect(() => {
     const loadUserMaterials = async () => {
@@ -27,6 +28,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
     const success = await materialsAPI.purchaseMaterial(materialId, quantity);
     if (success) {
       setPurchaseMessage(`Purchased ${quantity} items.`);
+      setRecentPurchase(materialId);
       const data = await materialsAPI.getUserMaterials(user.id);
       setUserMaterials(data);
       await refreshSession();
@@ -34,6 +36,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
       setPurchaseMessage('Purchase failed.');
     }
     setTimeout(() => setPurchaseMessage(null), 2000);
+    setTimeout(() => setRecentPurchase(null), 900);
   };
 
   if (!active) return null;
@@ -41,7 +44,13 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
   return (
     <section id="materials-tab" className="tab-content active">
       <div className="materials-container">
-        <h2>⚒️ Material Market</h2>
+        <div className="detail-heading">
+          <span>📦</span>
+          <div>
+            <h2>Material Market</h2>
+            <p>Watch prices, buy raw stock, and feed the inventory chest.</p>
+          </div>
+        </div>
         {purchaseMessage && (
           <div className="status status--info" style={{ marginBottom: 12 }}>
             {purchaseMessage}
@@ -55,6 +64,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
               owned={userMaterials[material.name] ?? 0}
               coins={Number(profile?.coins ?? 0)}
               onPurchase={handlePurchase}
+              recentlyPurchased={recentPurchase === material.id}
             />
           ))}
         </div>

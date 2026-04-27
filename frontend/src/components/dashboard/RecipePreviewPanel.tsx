@@ -10,7 +10,7 @@ interface RecipePreviewPanelProps {
 }
 
 const RecipePreviewPanel: React.FC<RecipePreviewPanelProps> = ({ recipes, onViewRecipes }) => (
-  <OrnatePanel title="Recipe Book" icon="📖" className="dashboard-panel dashboard-panel--summary">
+  <OrnatePanel title="Recipe Book" icon="📖" className="dashboard-panel dashboard-panel--summary" variant="tertiary">
     <div
       className="dashboard-asset"
       style={{ '--panel-art': `url("${uiAssets.recipes}")` } as React.CSSProperties}
@@ -22,7 +22,7 @@ const RecipePreviewPanel: React.FC<RecipePreviewPanelProps> = ({ recipes, onView
           <span>
             {recipe.icon} {recipe.name}
           </span>
-          <strong>{recipe.sellPrice}g</strong>
+          <strong>{recipe.difficulty}★</strong>
         </div>
       ))}
     </div>
@@ -33,4 +33,3 @@ const RecipePreviewPanel: React.FC<RecipePreviewPanelProps> = ({ recipes, onView
 );
 
 export default RecipePreviewPanel;
-

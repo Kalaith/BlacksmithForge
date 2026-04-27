@@ -6,7 +6,7 @@ type BackendUpgrade = {
   name: string;
   cost: number;
   description?: string;
-  effect?: string;
+  effect?: string | Record<string, unknown>;
   icon: string;
   unlock_level?: number;
 };
@@ -22,7 +22,9 @@ const transformBackendUpgrade = (upgrade: BackendUpgrade): ForgeUpgrade => ({
   id: upgrade.id,
   name: upgrade.name,
   cost: Number(upgrade.cost),
-  effect: upgrade.effect || upgrade.description || '',
+  effect:
+    upgrade.description ||
+    (typeof upgrade.effect === 'string' ? upgrade.effect : 'Permanent forge improvement'),
   icon: upgrade.icon,
   unlockLevel: upgrade.unlock_level,
 });

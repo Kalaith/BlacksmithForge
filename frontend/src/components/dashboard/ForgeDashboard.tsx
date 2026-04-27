@@ -30,12 +30,13 @@ const ForgeDashboard: React.FC<ForgeDashboardProps> = ({ onTabChange }) => {
         onViewRecipes={() => onTabChange('recipes')}
       />
       <InventoryPreviewPanel inventory={inventory} loading={inventoryLoading} />
-      <MarketPreviewPanel materials={materials} onBrowse={() => onTabChange('materials')} />
-      <RecipePreviewPanel recipes={recipes} onViewRecipes={() => onTabChange('recipes')} />
-      <UpgradePreviewPanel upgrades={upgrades} onViewUpgrades={() => onTabChange('upgrades')} />
+      <div className="forge-dashboard__tools">
+        <MarketPreviewPanel materials={materials} onBrowse={() => onTabChange('materials')} />
+        <RecipePreviewPanel recipes={recipes} onViewRecipes={() => onTabChange('recipes')} />
+        <UpgradePreviewPanel upgrades={upgrades} onViewUpgrades={() => onTabChange('upgrades')} />
+      </div>
     </section>
   );
 };
 
 export default ForgeDashboard;
-

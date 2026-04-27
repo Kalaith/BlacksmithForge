@@ -10,7 +10,7 @@ interface UpgradePreviewPanelProps {
 }
 
 const UpgradePreviewPanel: React.FC<UpgradePreviewPanelProps> = ({ upgrades, onViewUpgrades }) => (
-  <OrnatePanel title="Upgrades" icon="⬆️" className="dashboard-panel dashboard-panel--summary">
+  <OrnatePanel title="Upgrades" icon="🛠️" className="dashboard-panel dashboard-panel--summary" variant="tertiary">
     <div
       className="dashboard-asset"
       style={{ '--panel-art': `url("${uiAssets.upgrades}")` } as React.CSSProperties}
@@ -33,4 +33,3 @@ const UpgradePreviewPanel: React.FC<UpgradePreviewPanelProps> = ({ upgrades, onV
 );
 
 export default UpgradePreviewPanel;
-

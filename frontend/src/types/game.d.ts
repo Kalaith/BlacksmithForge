@@ -33,6 +33,7 @@ export interface Customer {
   preferences: string;
   reputation: number;
   icon: string;
+  description?: string;
 }
 
 export interface ForgeUpgrade {

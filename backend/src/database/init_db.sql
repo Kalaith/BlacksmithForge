@@ -205,8 +205,8 @@ CREATE TABLE IF NOT EXISTS customer_sales (
 );
 
 INSERT IGNORE INTO customer_types (name, preferences, icon, description, budget_min, budget_max) VALUES
-('Village Guard', 'durability', '???????', 'Seeks sturdy, reliable equipment', 40, 80),
-('Traveling Merchant', 'value', '????', 'Looks for good deals and cost-effective items', 20, 50),
-('Noble Knight', 'quality', '????', 'Demands the finest craftsmanship', 80, 150),
-('Apprentice Warrior', 'value', '??????', 'New warrior seeking affordable gear', 15, 35),
-('Master Blacksmith', 'quality', '????', 'Appreciates exceptional workmanship', 60, 120);
+('Village Guard', 'durability', '🛡️', 'Needs gear that survives another patrol.', 40, 80),
+('Traveling Merchant', 'value', '💰', 'Wants a fair deal before the road calls again.', 20, 50),
+('Noble Knight', 'quality', '👑', 'Expects polished steel fit for court.', 80, 150),
+('Apprentice Warrior', 'value', '⚔️', 'Needs dependable training gear on a tight purse.', 15, 35),
+('Master Blacksmith', 'quality', '🔨', 'Judges every edge, rivet, and temper line.', 60, 120);

@@ -28,7 +28,14 @@ const CustomersTab: React.FC<CustomersTabProps> = ({ active }) => {
                 <span className="crest-icon customer-ledger-row__icon">{customer.icon}</span>
                 <div>
                   <h3>{customer.name}</h3>
-                  <p>{customer.preferences}</p>
+                  <p>{customer.description || customer.preferences}</p>
+                  <span className={`intent-badge intent-badge--${customer.preferences}`}>
+                    {customer.preferences === 'durability'
+                      ? '🛡️ Durability'
+                      : customer.preferences === 'quality'
+                        ? '✦ Quality'
+                        : '🪙 Value'}
+                  </span>
                 </div>
               </div>
 

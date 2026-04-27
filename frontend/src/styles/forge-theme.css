@@ -14,6 +14,652 @@
   --forge-steel: #4f5658;
 }
 
+/* Interaction refresh pass */
+:root {
+  --forge-depth-primary: 0 18px 46px rgba(218, 91, 22, 0.26), 0 28px 64px rgba(0, 0, 0, 0.62);
+  --forge-depth-secondary: 0 14px 34px rgba(0, 0, 0, 0.52);
+  --forge-depth-ambient: 0 8px 20px rgba(0, 0, 0, 0.42);
+}
+
+.forge-shell__shade::after {
+  animation: forgeLightFlicker 5s ease-in-out infinite;
+  background: radial-gradient(circle at 58% 42%, rgba(255, 126, 38, 0.16), transparent 24rem);
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.forge-shell__embers {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+.forge-shell__embers span {
+  animation: emberRise 8s linear infinite;
+  background: #f2a24f;
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(242, 126, 45, 0.8);
+  height: 0.28rem;
+  opacity: 0;
+  position: absolute;
+  top: 92%;
+  width: 0.28rem;
+}
+
+.forge-shell__embers span:nth-child(1) {
+  animation-delay: 0s;
+  left: 62%;
+}
+
+.forge-shell__embers span:nth-child(2) {
+  animation-delay: 1.4s;
+  left: 71%;
+}
+
+.forge-shell__embers span:nth-child(3) {
+  animation-delay: 2.6s;
+  left: 82%;
+}
+
+.forge-shell__embers span:nth-child(4) {
+  animation-delay: 3.9s;
+  left: 54%;
+}
+
+.forge-shell__embers span:nth-child(5) {
+  animation-delay: 5.1s;
+  left: 76%;
+}
+
+.forge-shell__embers span:nth-child(6) {
+  animation-delay: 6.2s;
+  left: 67%;
+}
+
+.resource-stat {
+  position: relative;
+}
+
+.resource-stat.has-delta .resource-stat__icon {
+  animation: resourceJiggle 0.58s ease;
+}
+
+.resource-stat__delta {
+  animation: floatResourceDelta 1.2s ease forwards;
+  color: var(--forge-success);
+  font-weight: 800;
+  position: absolute;
+  right: 0.7rem;
+  top: 0.25rem;
+}
+
+.resource-stat__delta.is-negative {
+  color: #ff8d82;
+}
+
+.forge-navigation {
+  display: inline-grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(5, minmax(8.5rem, 1fr));
+  padding: 0.35rem;
+}
+
+.forge-navigation__tab {
+  align-items: center;
+  background: linear-gradient(180deg, rgba(32, 27, 22, 0.82), rgba(11, 10, 9, 0.92));
+  border: 1px solid rgba(141, 103, 64, 0.4);
+  display: flex;
+  gap: 0.65rem;
+  min-width: 8.5rem;
+  padding: 0.65rem 0.8rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.forge-navigation__tab:hover,
+.forge-navigation__tab:focus-visible {
+  border-color: rgba(240, 160, 66, 0.9);
+  box-shadow: 0 0 20px rgba(219, 98, 31, 0.2);
+  transform: translateY(-1px);
+}
+
+.forge-navigation__icon {
+  display: grid;
+  flex: 0 0 auto;
+  font-size: 1.35rem;
+  height: 2.3rem;
+  margin-right: 0;
+  place-items: center;
+  width: 2.3rem;
+}
+
+.forge-navigation__text {
+  display: grid;
+  gap: 0.12rem;
+  text-align: left;
+}
+
+.forge-navigation__text strong,
+.forge-navigation__text small {
+  display: block;
+}
+
+.forge-navigation__text small {
+  color: var(--forge-muted);
+  font-family: var(--font-family-base);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.forge-navigation__tab.is-active {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 214, 141, 0.18),
+    0 0 24px rgba(219, 98, 31, 0.32);
+}
+
+.tab-content.active.forge-dashboard {
+  grid-template-columns: minmax(24rem, 1.1fr) minmax(20rem, 0.9fr) minmax(16rem, 0.68fr);
+}
+
+.dashboard-panel--forge {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+}
+
+.dashboard-panel--customers {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.dashboard-panel--inventory {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.forge-dashboard__tools {
+  display: grid;
+  gap: 1rem;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ornate-panel--primary {
+  border-color: rgba(234, 153, 61, 0.72);
+  box-shadow: var(--forge-depth-primary);
+  z-index: 2;
+}
+
+.ornate-panel--secondary {
+  box-shadow: var(--forge-depth-secondary);
+}
+
+.ornate-panel--tertiary {
+  box-shadow: var(--forge-depth-ambient);
+}
+
+.forge-action {
+  align-items: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.38)),
+    var(--panel-art),
+    linear-gradient(135deg, #2b1b10, #0d0a07);
+  background-position: center;
+  background-size: cover;
+  border: 1px solid rgba(240, 160, 66, 0.78);
+  color: var(--forge-gold-soft);
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  margin-bottom: 1rem;
+  min-height: 23rem;
+  overflow: hidden;
+  padding: 1.25rem;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.forge-action::before,
+.forge-action::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+}
+
+.forge-action::before {
+  animation: forgeActionFlicker 1.8s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255, 111, 27, 0.52), transparent 58%);
+  height: 14rem;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: 14rem;
+}
+
+.forge-action::after {
+  background: linear-gradient(180deg, transparent, rgba(255, 121, 37, 0.2), transparent);
+  inset: 0;
+  mix-blend-mode: screen;
+}
+
+.forge-action:hover,
+.forge-action:focus-visible,
+.forge-action.is-lit {
+  box-shadow:
+    inset 0 0 100px rgba(234, 91, 21, 0.42),
+    0 0 36px rgba(219, 98, 31, 0.44);
+}
+
+.forge-action__fire {
+  animation: forgeFirePulse 1.45s ease-in-out infinite;
+  filter: drop-shadow(0 0 18px rgba(245, 113, 29, 0.95));
+  font-size: 5.8rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.forge-action__label {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  position: relative;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.forge-action__hint {
+  color: var(--forge-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  position: relative;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.inventory-chest {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0.85rem 0;
+}
+
+.inventory-chest__slot {
+  align-items: center;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 50% 28%, rgba(101, 72, 41, 0.72), rgba(11, 10, 8, 0.94));
+  border: 1px solid rgba(141, 103, 64, 0.5);
+  color: var(--forge-gold-soft);
+  cursor: help;
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  padding: 0.45rem;
+}
+
+.inventory-chest__slot span {
+  font-size: 1.4rem;
+}
+
+.inventory-chest__slot strong {
+  color: var(--forge-gold);
+  font-size: 0.8rem;
+}
+
+.customer-preview-row {
+  align-items: flex-start;
+}
+
+.intent-badge {
+  border: 1px solid rgba(141, 103, 64, 0.45);
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  padding: 0.2rem 0.45rem;
+  text-transform: uppercase;
+}
+
+.intent-badge--durability {
+  border-color: rgba(111, 143, 179, 0.65);
+  color: #9dbde0;
+}
+
+.intent-badge--value {
+  border-color: rgba(215, 166, 75, 0.66);
+  color: var(--forge-gold-soft);
+}
+
+.intent-badge--quality {
+  border-color: rgba(174, 124, 220, 0.6);
+  color: #d7b7ff;
+}
+
+.customer-ledger-row .intent-badge {
+  margin-top: 0.35rem;
+}
+
+.recipe-book-card.is-ready {
+  border-color: rgba(127, 184, 154, 0.75);
+  box-shadow: 0 0 24px rgba(127, 184, 154, 0.12);
+}
+
+.recipe-book-card__readiness,
+.recipe-book-card__material progress {
+  appearance: none;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(141, 103, 64, 0.32);
+  height: 0.55rem;
+  width: 100%;
+}
+
+.recipe-book-card__readiness {
+  margin-bottom: 0.9rem;
+}
+
+.recipe-book-card__readiness::-webkit-progress-bar,
+.recipe-book-card__material progress::-webkit-progress-bar {
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.recipe-book-card__readiness::-webkit-progress-value,
+.recipe-book-card__material progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #7fb89a, var(--forge-gold));
+}
+
+.recipe-book-card__readiness::-moz-progress-bar,
+.recipe-book-card__material progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #7fb89a, var(--forge-gold));
+}
+
+.recipe-book-card__material span {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.recipe-book-card__material strong {
+  flex: 0 0 auto;
+  margin-left: 0.75rem;
+}
+
+.recipe-book-card__material.is-missing progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #c84f42, #f0a24c);
+}
+
+.recipe-book-card__craft {
+  background: linear-gradient(180deg, #7b3513, #3c1e0e);
+  border: 1px solid var(--forge-border-bright);
+  color: var(--forge-gold-soft);
+  cursor: pointer;
+  font-weight: 800;
+  margin-top: 0.85rem;
+  min-height: 2.45rem;
+  text-transform: uppercase;
+  width: 100%;
+}
+
+.recipe-book-card__craft:disabled {
+  background: rgba(24, 18, 12, 0.7);
+  color: var(--forge-muted);
+  cursor: not-allowed;
+}
+
+.recipe-craft-message,
+.upgrade-purchase-message {
+  margin-bottom: 1rem;
+}
+
+.material-card {
+  position: relative;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.material-card--cheap {
+  background: linear-gradient(180deg, rgba(29, 24, 19, 0.98), rgba(14, 13, 11, 0.98));
+  border-color: rgba(127, 184, 154, 0.58);
+}
+
+.material-card--expensive {
+  border-color: rgba(200, 79, 66, 0.58);
+}
+
+.material-card .material-name {
+  color: var(--forge-gold-soft);
+}
+
+.material-card .material-description,
+.material-card .material-purchase-row {
+  color: var(--forge-text);
+}
+
+.material-card.just-bought {
+  animation: purchasePulse 0.85s ease;
+}
+
+.material-market-state {
+  color: var(--forge-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 0.45rem;
+  text-transform: uppercase;
+}
+
+.material-card--cheap .material-market-state {
+  color: var(--forge-success);
+}
+
+.material-card--expensive .material-market-state {
+  color: #ff8d82;
+}
+
+.material-purchase-row {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.85rem;
+}
+
+.market-row--cheap strong {
+  color: var(--forge-success);
+}
+
+.market-row--expensive strong {
+  color: #ff8d82;
+}
+
+.upgrade-card--milestone {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.22));
+  border-color: rgba(141, 103, 64, 0.5);
+}
+
+.upgrade-card--milestone.is-owned {
+  border-color: rgba(127, 184, 154, 0.75);
+}
+
+.upgrade-card--milestone.is-locked {
+  filter: grayscale(0.35);
+  opacity: 0.78;
+}
+
+.upgrade-state {
+  color: var(--forge-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+}
+
+.upgrade-tier-track {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0.85rem 0;
+}
+
+.upgrade-tier-track span {
+  background: rgba(0, 0, 0, 0.34);
+  border: 1px solid rgba(141, 103, 64, 0.45);
+  height: 0.5rem;
+}
+
+.upgrade-tier-track span.is-filled {
+  background: linear-gradient(90deg, var(--forge-success), var(--forge-gold));
+  border-color: rgba(127, 184, 154, 0.72);
+}
+
+.upgrade-card--milestone .btn:disabled,
+.material-card .btn:disabled {
+  color: var(--forge-muted);
+  opacity: 0.7;
+}
+
+@keyframes forgeLightFlicker {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  45% {
+    opacity: 0.85;
+  }
+
+  62% {
+    opacity: 0.42;
+  }
+}
+
+@keyframes emberRise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.8);
+  }
+
+  12% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-2.5rem, -42rem, 0) scale(0.25);
+  }
+}
+
+@keyframes forgeActionFlicker {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes forgeFirePulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes resourceJiggle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  30% {
+    transform: rotate(-8deg) scale(1.12);
+  }
+
+  65% {
+    transform: rotate(7deg) scale(1.04);
+  }
+}
+
+@keyframes floatResourceDelta {
+  0% {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-1.3rem);
+  }
+}
+
+@keyframes purchasePulse {
+  0% {
+    box-shadow: 0 0 0 rgba(215, 166, 75, 0);
+    transform: translateY(0);
+  }
+
+  45% {
+    box-shadow: 0 0 26px rgba(215, 166, 75, 0.32);
+    transform: translateY(-2px);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(215, 166, 75, 0);
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-panel--forge,
+  .dashboard-panel--customers,
+  .dashboard-panel--inventory,
+  .forge-dashboard__tools {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .dashboard-panel--forge {
+    order: -2;
+  }
+
+  .forge-dashboard__tools {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forge-shell__shade::after,
+  .forge-shell__embers span,
+  .forge-action::before,
+  .forge-action__fire,
+  .resource-stat.has-delta .resource-stat__icon,
+  .resource-stat__delta,
+  .material-card.just-bought {
+    animation: none;
+  }
+}
+
 .forge-shell {
   min-height: 100vh;
   background:

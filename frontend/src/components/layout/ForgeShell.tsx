@@ -7,9 +7,16 @@ const ForgeShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     style={{ '--forge-bg-image': `url("${uiAssets.background}")` } as React.CSSProperties}
   >
     <div className="forge-shell__shade" />
+    <div className="forge-shell__embers" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+    </div>
     <div className="forge-shell__content">{children}</div>
   </div>
 );
 
 export default ForgeShell;
-

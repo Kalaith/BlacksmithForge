@@ -9,8 +9,14 @@ interface MarketPreviewPanelProps {
   onBrowse: () => void;
 }
 
+const getPriceMood = (cost: number): 'cheap' | 'normal' | 'expensive' => {
+  if (cost <= 10) return 'cheap';
+  if (cost >= 50) return 'expensive';
+  return 'normal';
+};
+
 const MarketPreviewPanel: React.FC<MarketPreviewPanelProps> = ({ materials, onBrowse }) => (
-  <OrnatePanel title="Materials Market" icon="⚒️" className="dashboard-panel dashboard-panel--summary">
+  <OrnatePanel title="Materials Market" icon="📦" className="dashboard-panel dashboard-panel--summary" variant="tertiary">
     <div
       className="dashboard-asset"
       style={{ '--panel-art': `url("${uiAssets.market}")` } as React.CSSProperties}
@@ -18,7 +24,7 @@ const MarketPreviewPanel: React.FC<MarketPreviewPanelProps> = ({ materials, onBr
     <p className="dashboard-copy">Buy raw materials to fuel your creations.</p>
     <div className="dashboard-ledger">
       {materials.slice(0, 5).map(material => (
-        <div key={material.name}>
+        <div key={material.name} className={`market-row market-row--${getPriceMood(material.cost)}`}>
           <span>
             {material.icon} {material.name}
           </span>
@@ -33,4 +39,3 @@ const MarketPreviewPanel: React.FC<MarketPreviewPanelProps> = ({ materials, onBr
 );
 
 export default MarketPreviewPanel;
-

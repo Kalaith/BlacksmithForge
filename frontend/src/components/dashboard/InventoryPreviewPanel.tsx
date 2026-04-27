@@ -10,7 +10,12 @@ interface InventoryPreviewPanelProps {
 }
 
 const InventoryPreviewPanel: React.FC<InventoryPreviewPanelProps> = ({ inventory, loading }) => (
-  <OrnatePanel title="Inventory" icon="🧰" className="dashboard-panel dashboard-panel--inventory">
+  <OrnatePanel
+    title="Inventory"
+    icon="🧰"
+    className="dashboard-panel dashboard-panel--inventory"
+    variant="tertiary"
+  >
     <div
       className="dashboard-asset dashboard-asset--inventory"
       style={{ '--panel-art': `url("${uiAssets.inventory}")` } as React.CSSProperties}
@@ -18,13 +23,18 @@ const InventoryPreviewPanel: React.FC<InventoryPreviewPanelProps> = ({ inventory
     {loading ? (
       <p className="dashboard-copy">Checking the stockroom...</p>
     ) : inventory.length > 0 ? (
-      <div className="dashboard-list dashboard-list--compact">
-        {inventory.slice(0, 3).map((item, index) => (
-          <div key={item.id ?? index} className="dashboard-row dashboard-row--compact">
+      <div className="inventory-chest" aria-label="Inventory chest">
+        {inventory.slice(0, 6).map((item, index) => (
+          <button
+            key={item.id ?? index}
+            className={`inventory-chest__slot inventory-chest__slot--${item.type}`}
+            title={`${item.name}: ${item.value}g`}
+            type="button"
+            disabled
+          >
             <span>{item.icon}</span>
-            <span>{item.name}</span>
             <strong>{item.value}g</strong>
-          </div>
+          </button>
         ))}
       </div>
     ) : (
@@ -37,4 +47,3 @@ const InventoryPreviewPanel: React.FC<InventoryPreviewPanelProps> = ({ inventory
 );
 
 export default InventoryPreviewPanel;
-

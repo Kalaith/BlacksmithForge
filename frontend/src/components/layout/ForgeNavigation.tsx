@@ -6,11 +6,11 @@ interface ForgeNavigationProps {
 }
 
 const TABS = [
-  { key: 'forge', label: 'Forge', icon: '🔥' },
-  { key: 'recipes', label: 'Recipes', icon: '📖' },
-  { key: 'materials', label: 'Materials', icon: '⚒️' },
-  { key: 'customers', label: 'Customers', icon: '👥' },
-  { key: 'upgrades', label: 'Upgrades', icon: '⬆️' },
+  { key: 'forge', label: 'Forge', icon: '🔥', station: 'Anvil' },
+  { key: 'recipes', label: 'Recipes', icon: '📖', station: 'Book' },
+  { key: 'materials', label: 'Materials', icon: '📦', station: 'Crate' },
+  { key: 'customers', label: 'Customers', icon: '📌', station: 'Board' },
+  { key: 'upgrades', label: 'Upgrades', icon: '🛠️', station: 'Bench' },
 ];
 
 const ForgeNavigation: React.FC<ForgeNavigationProps> = ({ activeTab, onTabChange }) => (
@@ -22,12 +22,14 @@ const ForgeNavigation: React.FC<ForgeNavigationProps> = ({ activeTab, onTabChang
         data-tab={tab.key}
         onClick={() => onTabChange(tab.key)}
       >
-        <span>{tab.icon}</span>
-        {tab.label}
+        <span className="forge-navigation__icon">{tab.icon}</span>
+        <span className="forge-navigation__text">
+          <strong>{tab.label}</strong>
+          <small>{tab.station}</small>
+        </span>
       </button>
     ))}
   </nav>
 );
 
 export default ForgeNavigation;
-

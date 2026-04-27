@@ -4,11 +4,18 @@ interface OrnatePanelProps {
   title?: string;
   icon?: React.ReactNode;
   className?: string;
+  variant?: 'primary' | 'secondary' | 'tertiary';
   children: React.ReactNode;
 }
 
-const OrnatePanel: React.FC<OrnatePanelProps> = ({ title, icon, className = '', children }) => (
-  <section className={`ornate-panel ${className}`.trim()}>
+const OrnatePanel: React.FC<OrnatePanelProps> = ({
+  title,
+  icon,
+  className = '',
+  variant = 'secondary',
+  children,
+}) => (
+  <section className={`ornate-panel ornate-panel--${variant} ${className}`.trim()}>
     {title ? (
       <header className="ornate-panel__header">
         {icon ? <span className="ornate-panel__icon">{icon}</span> : null}
@@ -20,4 +27,3 @@ const OrnatePanel: React.FC<OrnatePanelProps> = ({ title, icon, className = '', 
 );
 
 export default OrnatePanel;
-
