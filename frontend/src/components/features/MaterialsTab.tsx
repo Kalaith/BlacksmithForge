@@ -17,7 +17,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
   useEffect(() => {
     const loadUserMaterials = async () => {
       if (!isAuthenticated || !user?.id) return;
-      const data = await materialsAPI.getUserMaterials(user.id);
+      const data = await materialsAPI.getUserMaterials();
       setUserMaterials(data);
     };
     loadUserMaterials();
@@ -29,7 +29,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
     if (success) {
       setPurchaseMessage(`Purchased ${quantity} items.`);
       setRecentPurchase(materialId);
-      const data = await materialsAPI.getUserMaterials(user.id);
+      const data = await materialsAPI.getUserMaterials();
       setUserMaterials(data);
       await refreshSession();
     } else {

@@ -1,18 +1,18 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Actions;
 
 use App\Services\MaterialService;
-use App\Services\AuthService;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Container\ContainerInterface;
 
 class MaterialActions {
     private MaterialService $materialService;
-    private AuthService $authService;
 
     public function __construct(ContainerInterface $container) {
         $this->materialService = $container->get(MaterialService::class);
-        $this->authService = $container->get(AuthService::class);
     }
 
     /**

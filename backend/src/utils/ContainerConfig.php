@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Utils;
 
 use DI\Container;
@@ -15,11 +17,12 @@ use App\Repositories\CraftingRepository;
 use App\Repositories\UpgradeRepository;
 use App\Repositories\MiniGameRepository;
 use App\Repositories\GameConfigRepository;
+use App\Repositories\GuestAccountRepository;
+use App\Actions\LinkGuestAccountAction;
 use App\Services\MaterialService;
 use App\Services\RecipeService;
 use App\Services\CustomerService;
 use App\Services\InventoryService;
-use App\Services\AuthService;
 use App\Services\CraftingService;
 use App\Services\UpgradeService;
 use App\Services\MiniGameService;
@@ -94,6 +97,18 @@ class ContainerConfig
             GameConfigRepository::class => function (\PDO $pdo) {
                 return new GameConfigRepository($pdo);
             },
+
+            GuestAccountRepository::class => function (\PDO $pdo) {
+                return new GuestAccountRepository($pdo);
+            },
+
+            LinkGuestAccountAction::class => function (
+                AuthRepository $authRepo,
+                BlacksmithProfileRepository $profileRepo,
+                GuestAccountRepository $guestAccountRepo
+            ) {
+                return new LinkGuestAccountAction($authRepo, $profileRepo, $guestAccountRepo);
+            },
             
             // Services
             MaterialService::class => function (
@@ -120,10 +135,6 @@ class ContainerConfig
             
             InventoryService::class => function (InventoryRepository $repo, MaterialRepository $materialRepo, LoggerInterface $logger) {
                 return new InventoryService($repo, $materialRepo, $logger);
-            },
-            
-            AuthService::class => function (AuthRepository $repo, LoggerInterface $logger) {
-                return new AuthService($repo, $logger);
             },
             
             CraftingService::class => function (
@@ -155,12 +166,11 @@ class ContainerConfig
             
             // Controllers
             \App\Controllers\AuthController::class => function (
-                \PDO $pdo,
                 AuthRepository $authRepo,
                 BlacksmithProfileRepository $profileRepo,
-                AuthService $authService
+                LinkGuestAccountAction $linkGuestAccountAction
             ) {
-                return new \App\Controllers\AuthController($pdo, $authRepo, $profileRepo, $authService);
+                return new \App\Controllers\AuthController($authRepo, $profileRepo, $linkGuestAccountAction);
             },
             
             \App\Controllers\MaterialController::class => function (MaterialService $materialService) {

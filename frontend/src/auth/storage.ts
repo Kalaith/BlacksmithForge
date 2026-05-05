@@ -38,49 +38,33 @@ export const getFrontpageToken = (): string | null => {
 };
 
 export const persistLoginUrl = (loginUrl: string): void => {
-  try {
-    const raw = localStorage.getItem(WEBHATCHERY_AUTH_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    const state = parsed?.state ?? {};
-    localStorage.setItem(
-      WEBHATCHERY_AUTH_STORAGE_KEY,
-      JSON.stringify({
-        ...parsed,
-        state: {
-          ...state,
-          loginUrl,
-        },
-      })
-    );
-  } catch {
-    // Ignore storage failures.
-  }
+  useAuthStore.getState().setLoginUrl(loginUrl);
 };
 
 export const getGuestSession = (): GuestSessionData | null => {
-  try {
-    const raw = localStorage.getItem(BLACKSMITH_GUEST_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as GuestSessionData) : null;
-  } catch {
-    return null;
-  }
+  return useAuthStore.getState().guestSession;
 };
 
 export const saveGuestSession = (session: GuestSessionData): void => {
-  localStorage.setItem(BLACKSMITH_GUEST_STORAGE_KEY, JSON.stringify(session));
+  useAuthStore.getState().setGuestSession(session);
 };
 
 export const clearGuestSession = (): void => {
-  localStorage.removeItem(BLACKSMITH_GUEST_STORAGE_KEY);
+  useAuthStore.getState().setGuestSession(null);
 };
 
 export const getActiveToken = (): string | null => {
+  const frontpageToken = getFrontpageToken();
+  if (frontpageToken) {
+    return frontpageToken;
+  }
+
   const guest = getGuestSession();
   if (guest?.token) {
     return guest.token;
   }
 
-  return getFrontpageToken();
+  return null;
 };
 
 export const getActiveUserId = (): number => {
@@ -98,3 +82,4 @@ export const getActiveUserId = (): number => {
     return 0;
   }
 };
+import { useAuthStore } from '../stores/authStore';

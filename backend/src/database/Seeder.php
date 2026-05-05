@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database;
 
 use App\External\DatabaseService;
@@ -25,7 +27,7 @@ class Seeder
 
     private function initDatabaseSchema(): void
     {
-        $sqlFile = __DIR__ . '/init_db.sql';
+        $sqlFile = dirname(__DIR__, 2) . '/database/init_db.sql';
         if (!file_exists($sqlFile)) {
             throw new \RuntimeException("init_db.sql not found at $sqlFile");
         }
@@ -41,7 +43,8 @@ class Seeder
 
     private function seedMaterials(): void
     {
-        $stmt = $this->pdo->query("SELECT COUNT(*) FROM materials");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM materials");
+        $stmt->execute();
         if ($stmt->fetchColumn() > 0) {
             return;
         }
@@ -61,7 +64,8 @@ class Seeder
 
     private function seedRecipes(): void
     {
-        $stmt = $this->pdo->query("SELECT COUNT(*) FROM recipes");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM recipes");
+        $stmt->execute();
         if ($stmt->fetchColumn() > 0) {
             return;
         }
@@ -79,7 +83,8 @@ class Seeder
 
     private function seedCustomers(): void
     {
-        $stmt = $this->pdo->query("SELECT COUNT(*) FROM customers");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM customers");
+        $stmt->execute();
         if ($stmt->fetchColumn() > 0) {
             return;
         }
@@ -97,7 +102,8 @@ class Seeder
 
     private function seedForgeUpgrades(): void
     {
-        $stmt = $this->pdo->query("SELECT COUNT(*) FROM upgrades");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM upgrades");
+        $stmt->execute();
         if ($stmt->fetchColumn() > 0) {
             return;
         }

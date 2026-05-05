@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\External;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+use App\Core\Environment;
 
 class DatabaseService
 {
@@ -12,43 +14,14 @@ class DatabaseService
     private function __construct()
     {
         $this->loadEnvironmentFile();
-        $configPath = __DIR__ . '/../../config/database.php';
-        if (file_exists($configPath)) {
-            $config = require $configPath;
-            $db = $config['database'];
-        } else {
-            $db = [
-                'driver' => 'mysql',
-                'host' => $_ENV['DB_HOST'] ?? 'localhost',
-                'port' => $_ENV['DB_PORT'] ?? 3306,
-                'database' => $_ENV['DB_NAME'] ?? $_ENV['DB_DATABASE'] ?? 'blacksmith_forge',
-                'username' => $_ENV['DB_USER'] ?? $_ENV['DB_USERNAME'] ?? 'root',
-                'password' => $_ENV['DB_PASSWORD'] ?? '',
-                'charset' => 'utf8mb4',
-            ];
-        }
-
-        switch ($db['driver']) {
-            case 'mysql':
-                $dsn = sprintf(
-                    'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-                    $db['host'],
-                    $db['port'],
-                    $db['database'],
-                    $db['charset']
-                );
-                break;
-            case 'sqlite':
-                $dbPath = $db['database'] ?? __DIR__ . '/../../storage/database.sqlite';
-                $storageDir = dirname($dbPath);
-                if (!is_dir($storageDir)) {
-                    mkdir($storageDir, 0755, true);
-                }
-                $dsn = "sqlite:" . $dbPath;
-                break;
-            default:
-                throw new \Exception("Unsupported database driver: {$db['driver']}");
-        }
+        $charset = 'utf8mb4';
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+            Environment::required('DB_HOST'),
+            Environment::requiredInt('DB_PORT'),
+            Environment::required('DB_NAME'),
+            $charset
+        );
 
         $options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -59,15 +32,13 @@ class DatabaseService
         try {
             $this->pdo = new \PDO(
                 $dsn,
-                $db['username'] ?? null,
-                $db['password'] ?? null,
+                Environment::required('DB_USER'),
+                Environment::required('DB_PASSWORD', true),
                 $options
             );
-            if ($db['driver'] === 'mysql') {
-                $this->pdo->exec("SET NAMES {$db['charset']}");
-            }
+            $this->pdo->exec("SET NAMES {$charset}");
         } catch (\PDOException $e) {
-            throw new \Exception("Connection failed: " . $e->getMessage());
+            throw new \RuntimeException("Connection failed: " . $e->getMessage());
         }
     }
 
@@ -79,7 +50,7 @@ class DatabaseService
         return self::$instance;
     }
 
-    public function getPdo()
+    public function getPdo(): \PDO
     {
         return $this->pdo;
     }
@@ -108,10 +79,11 @@ class DatabaseService
         }
     }
 
-    public function testConnection()
+    public function testConnection(): bool
     {
         try {
-            $stmt = $this->pdo->query("SELECT 1");
+            $stmt = $this->pdo->prepare("SELECT 1");
+            $stmt->execute();
             return $stmt !== false;
         } catch (\PDOException $e) {
             return false;
@@ -120,5 +92,5 @@ class DatabaseService
 
     // Prevent cloning and unserialization
     private function __clone() {}
-    public function __wakeup() {}
+    public function __wakeup(): void {}
 }

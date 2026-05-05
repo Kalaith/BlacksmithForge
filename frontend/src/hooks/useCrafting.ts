@@ -59,7 +59,7 @@ export function useCrafting(selectedRecipeName: string | null) {
     if (!isAuthenticated || !user?.id) return;
 
     try {
-      await inventoryAPI.getUserInventory(user.id);
+      await inventoryAPI.getUserInventory();
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
@@ -72,7 +72,7 @@ export function useCrafting(selectedRecipeName: string | null) {
     if (!isAuthenticated || !user?.id || !recipeId) return;
 
     try {
-      const validationResult = await craftingAPI.validateCrafting(user.id, recipeId);
+      const validationResult = await craftingAPI.validateCrafting(recipeId);
       setValidation(validationResult);
     } catch (error) {
       console.error('Failed to validate crafting:', error);

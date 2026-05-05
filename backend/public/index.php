@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // Local autoloader for deployed API src (avoid central autoload mapping collisions)
 $localAutoloader = function (string $class): void {
     $prefix = 'App\\';
@@ -28,6 +30,7 @@ use Dotenv\Dotenv;
 use App\External\DatabaseService;
 use App\Utils\ContainerConfig;
 use App\Core\Router;
+use App\Core\Environment;
 
 // Load environment variables first
 $dotenvPath = __DIR__ . '/..';
@@ -45,15 +48,13 @@ $required_env_vars = [
     'DB_USER',
     'DB_PASSWORD',
     'APP_BASE_PATH',
-    'LOGIN_URL',
+    'WEB_HATCHERY_LOGIN_URL',
     'JWT_SECRET',
     'JWT_ISSUER',
     'JWT_AUDIENCE',
 ];
 foreach ($required_env_vars as $var) {
-    if (!isset($_ENV[$var]) || $_ENV[$var] === '') {
-        throw new \RuntimeException("Missing required environment variable: {$var}");
-    }
+    Environment::required($var, $var === 'DB_PASSWORD');
 }
 
 // Create DI Container
@@ -66,7 +67,7 @@ $db = DatabaseService::getInstance();
 $router = new Router($container);
 
 // Set base path for subdirectory deployment.
-$router->setBasePath(rtrim($_ENV['APP_BASE_PATH'], '/'));
+$router->setBasePath(rtrim(Environment::required('APP_BASE_PATH'), '/'));
 
 // Handle CORS preflight
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {

@@ -24,8 +24,8 @@ export const customersAPI = {
     );
   },
 
-  async getCurrentCustomer(userId: number): Promise<CustomerInteraction | null> {
-    const response = await apiClient.get<CustomerInteraction>(`/customers/current/${userId}`);
+  async getCurrentCustomer(): Promise<CustomerInteraction | null> {
+    const response = await apiClient.get<CustomerInteraction>('/customers/current');
     return response.success ? response.data ?? null : null;
   },
 
@@ -35,13 +35,10 @@ export const customersAPI = {
   },
 
   async getSellingPrice(
-    userId: number,
     itemId: number,
     customerId: number
   ): Promise<SellingPriceInfo> {
-    const response = await apiClient.get<SellingPriceInfo>(
-      `/customers/price/${userId}/${itemId}/${customerId}`
-    );
+    const response = await apiClient.get<SellingPriceInfo>(`/customers/price/${itemId}/${customerId}`);
     return requireData(response.success, response.data, response.message);
   },
 

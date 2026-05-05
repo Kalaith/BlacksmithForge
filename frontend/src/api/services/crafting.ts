@@ -20,10 +20,8 @@ const transformValidation = (validation: BackendCraftingValidation): CraftingVal
 });
 
 export const craftingAPI = {
-  async validateCrafting(userId: number, recipeId: number): Promise<CraftingValidation> {
-    const response = await apiClient.get<BackendCraftingValidation>(
-      `/crafting/validate/${userId}/${recipeId}`
-    );
+  async validateCrafting(recipeId: number): Promise<CraftingValidation> {
+    const response = await apiClient.get<BackendCraftingValidation>(`/crafting/validate/${recipeId}`);
     return transformValidation(requireData(response.success, response.data, response.message));
   },
 
@@ -59,10 +57,8 @@ export const craftingAPI = {
     return requireData(response.success, response.data, response.message);
   },
 
-  async getHistory(userId: number): Promise<Array<Record<string, unknown>>> {
-    const response = await apiClient.get<Array<Record<string, unknown>>>(
-      `/crafting/history/${userId}`
-    );
+  async getHistory(): Promise<Array<Record<string, unknown>>> {
+    const response = await apiClient.get<Array<Record<string, unknown>>>('/crafting/history');
     return response.success ? response.data ?? [] : [];
   },
 

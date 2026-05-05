@@ -59,7 +59,7 @@ export function useForge() {
     try {
       const validationPromises = recipesWithIds.map(async (recipe: Recipe) => {
         try {
-          const validation = await craftingAPI.validateCrafting(user.id, recipe.id as number);
+          const validation = await craftingAPI.validateCrafting(recipe.id as number);
           return {
             recipeName: recipe.name,
             canCraft: validation?.can_craft || false,

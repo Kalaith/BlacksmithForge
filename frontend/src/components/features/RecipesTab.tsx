@@ -16,7 +16,7 @@ const RecipesTab: React.FC<RecipesTabProps> = ({ active }) => {
   useEffect(() => {
     const loadUserMaterials = async () => {
       if (!isAuthenticated || !user?.id) return;
-      const data = await materialsAPI.getUserMaterials(user.id);
+      const data = await materialsAPI.getUserMaterials();
       setUserMaterials(data);
     };
     loadUserMaterials();

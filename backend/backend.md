@@ -64,10 +64,12 @@ The backend should provide RESTful APIs for all game features, handle authentica
 ---
 
 ## Authentication
-- **Endpoints:**
-  - `POST /auth/register` — Register new user
-  - `POST /auth/login` — Login user
-  - `POST /auth/logout` — Logout user
+- Shared Web Hatchery Login is the supported authentication flow.
+- Protected endpoints require `Authorization: Bearer <token>`.
+- Missing or invalid authentication returns `401` with `login_url`.
+- `GET /api/v1/auth/login-info` exposes the configured login URL.
+- `POST /api/v1/auth/guest-session` creates a guest JWT session.
+- `POST /api/v1/auth/link-guest` accepts `guest_token` and merges guest progress into the authenticated Web Hatchery user.
 
 ---
 
@@ -161,13 +163,12 @@ backend/
 ## Setup Instructions
 
 1. **Environment**: Use PHP 8.1+, Composer, and MySQL/MariaDB.
-2. **Install dependencies**: Run `composer install` to set up packages 
-3. **Environment variables**: Copy `.env.example` to `.env` and configure database, JWT secret, etc.
-4. **Database migration**: Use migration scripts to set up tables for all entities (materials, recipes, customers, etc.).
-5. **Seeding**: Add initial game data using seeders.
-6. **Routing**: Define RESTful routes in `routes/api.php`.
-7. **Testing**: Add unit and integration tests in the `tests/` directory.
-8. **Deployment**: Use environment-specific configs and scripts for production deployment.
+2. **Dependencies**: Runtime dependencies are managed by the WebHatchery root Composer install. The app `composer.json` keeps only scripts and local autoload metadata.
+3. **Environment variables**: Copy `.env.example` to `.env` and explicitly configure every required value. Code must not provide fallback values for required environment variables.
+4. **Database migration**: SQL lives under `backend/database/`. Run `backend/database/init_db.sql`, then ordered scripts in `backend/database/migrations/`.
+5. **Seeding**: Run `php src/database/Seeder.php` after schema setup when seed data is needed.
+6. **Testing**: Run `composer run cs-check` and `composer run test`.
+7. **Deployment**: Use the project `publish.ps1` from the game root.
 
 ## Development Workflow
 

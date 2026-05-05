@@ -36,7 +36,7 @@ export function useMaterials() {
     setState(prev => ({ ...prev, loading: true }));
 
     try {
-      const materials = await materialsAPI.getUserMaterials(user.id);
+      const materials = await materialsAPI.getUserMaterials();
       setState({
         materials: materials || {},
         loading: false,
@@ -135,7 +135,7 @@ export function useInventory(): UseInventoryReturn {
     setState(prev => ({ ...prev, loading: true }));
 
     try {
-      const inventory = await inventoryAPI.getUserInventory(user.id);
+      const inventory = await inventoryAPI.getUserInventory();
       const totalValue = inventoryUtils.calculateTotalValue(inventory);
 
       setState({
@@ -169,7 +169,7 @@ export function useInventory(): UseInventoryReturn {
       }
 
       try {
-        await inventoryAPI.removeItem(user.id, item);
+        await inventoryAPI.removeItem(item);
         await fetchInventory(); // Refresh inventory after removal
         return true;
       } catch (error) {

@@ -3,13 +3,12 @@ import api, { materialsAPI, recipesAPI, customersAPI, upgradesAPI } from '../api
 import { Material, Recipe, Customer, ForgeUpgrade } from '../types/game.d';
 import { InventoryItem } from '../types/inventory';
 import {
-  AuthProfile,
-  AuthUser,
   clearGuestSession,
   getFrontpageToken,
   getGuestSession,
   saveGuestSession,
 } from '../auth/storage';
+import { useAuthStore } from '../stores/authStore';
 
 type CraftingHistoryEntry = Record<string, unknown>;
 type CraftingMaterialsPayload = Array<Record<string, unknown>>;
@@ -172,53 +171,17 @@ export function useRecipes() {
   };
 }
 
-const migrateGuestLocalState = (guestUserId: number, targetUserId: number): void => {
-  const keyPairs = [
-    [`bf_materials_${guestUserId}`, `bf_materials_${targetUserId}`],
-    [`bf_inventory_${guestUserId}`, `bf_inventory_${targetUserId}`],
-    [`bf_current_customer_${guestUserId}`, `bf_current_customer_${targetUserId}`],
-  ];
-
-  keyPairs.forEach(([guestKey, targetKey]) => {
-    const guestRaw = localStorage.getItem(guestKey);
-    if (!guestRaw) {
-      return;
-    }
-
-    const targetRaw = localStorage.getItem(targetKey);
-    if (!targetRaw) {
-      localStorage.setItem(targetKey, guestRaw);
-    } else {
-      try {
-        const guestParsed = JSON.parse(guestRaw);
-        const targetParsed = JSON.parse(targetRaw);
-
-        if (Array.isArray(guestParsed) && Array.isArray(targetParsed)) {
-          localStorage.setItem(targetKey, JSON.stringify([...targetParsed, ...guestParsed]));
-        } else if (
-          guestParsed &&
-          typeof guestParsed === 'object' &&
-          targetParsed &&
-          typeof targetParsed === 'object'
-        ) {
-          localStorage.setItem(targetKey, JSON.stringify({ ...guestParsed, ...targetParsed }));
-        }
-      } catch {
-        localStorage.setItem(targetKey, guestRaw);
-      }
-    }
-
-    localStorage.removeItem(guestKey);
-  });
-};
-
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [profile, setProfile] = useState<AuthProfile | null>(null);
+  const user = useAuthStore(state => state.user);
+  const profile = useAuthStore(state => state.profile);
+  const loginUrl = useAuthStore(state => state.loginUrl);
+  const authMode = useAuthStore(state => state.authMode);
+  const setSession = useAuthStore(state => state.setSession);
+  const setGuestSession = useAuthStore(state => state.setGuestSession);
+  const setStoredLoginUrl = useAuthStore(state => state.setLoginUrl);
+  const clearSession = useAuthStore(state => state.clearSession);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loginUrl, setLoginUrl] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<'frontpage' | 'guest' | null>(null);
 
   const register = useCallback(async (_username: string, _password: string) => {
     setLoading(true);
@@ -249,16 +212,14 @@ export function useAuth() {
   const logout = useCallback(async () => {
     setLoading(true);
     try {
-      setUser(null);
-      setProfile(null);
-      setAuthMode(null);
       clearGuestSession();
+      clearSession();
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearSession]);
 
   const loadSession = useCallback(async () => {
     setLoading(true);
@@ -266,19 +227,14 @@ export function useAuth() {
 
     try {
       const params = new URLSearchParams(window.location.search);
-      const linkingGuestUserId = Number(params.get('guest_user_id') || '0');
       const frontpageToken = getFrontpageToken();
       const guestSession = getGuestSession();
 
-      if (linkingGuestUserId > 0 && frontpageToken) {
-        const linked = await api.auth.linkGuest(linkingGuestUserId, frontpageToken);
+      if (guestSession?.token && frontpageToken) {
+        const linked = await api.auth.linkGuest(guestSession.token, frontpageToken);
         if (linked) {
-          migrateGuestLocalState(linkingGuestUserId, Number(linked.user.id));
           clearGuestSession();
-          setUser(linked.user);
-          setProfile(linked.profile);
-          setAuthMode('frontpage');
-          params.delete('guest_user_id');
+          setSession(linked.user, linked.profile, 'frontpage');
           const nextQuery = params.toString();
           window.history.replaceState({}, document.title, `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
           setLoading(false);
@@ -289,10 +245,9 @@ export function useAuth() {
       if (guestSession?.token) {
         const session = await api.auth.session(guestSession.token);
         if (session) {
-          saveGuestSession({ token: guestSession.token, user: session.user, profile: session.profile });
-          setUser(session.user);
-          setProfile(session.profile);
-          setAuthMode('guest');
+          const storedGuestSession = { token: guestSession.token, user: session.user, profile: session.profile };
+          saveGuestSession(storedGuestSession);
+          setSession(session.user, session.profile, 'guest');
           setLoading(false);
           return;
         }
@@ -301,26 +256,20 @@ export function useAuth() {
       if (frontpageToken) {
         const session = await api.auth.session(frontpageToken);
         if (session) {
-          setUser(session.user);
-          setProfile(session.profile);
-          setAuthMode('frontpage');
+          setSession(session.user, session.profile, 'frontpage');
           setLoading(false);
           return;
         }
       }
 
-      setUser(null);
-      setProfile(null);
-      setAuthMode(null);
+      clearSession();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load session');
-      setUser(null);
-      setProfile(null);
-      setAuthMode(null);
+      clearSession();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearSession, setSession]);
 
   useEffect(() => {
     loadSession();
@@ -329,12 +278,12 @@ export function useAuth() {
   useEffect(() => {
     const handleLoginRequired = (event: Event) => {
       const customEvent = event as CustomEvent<{ loginUrl?: string }>;
-      setLoginUrl(customEvent.detail?.loginUrl ?? null);
+      setStoredLoginUrl(customEvent.detail?.loginUrl ?? null);
     };
 
     window.addEventListener('webhatchery:login-required', handleLoginRequired as EventListener);
     return () => window.removeEventListener('webhatchery:login-required', handleLoginRequired as EventListener);
-  }, []);
+  }, [setStoredLoginUrl]);
 
   const continueAsGuest = useCallback(async () => {
     setLoading(true);
@@ -345,20 +294,20 @@ export function useAuth() {
         throw new Error('Failed to create guest session');
       }
 
-      saveGuestSession({
+      const guestSession = {
         token: session.token,
         user: session.user,
         profile: session.profile,
-      });
-      setUser(session.user);
-      setProfile(session.profile);
-      setAuthMode('guest');
+      };
+      saveGuestSession(guestSession);
+      setGuestSession(guestSession);
+      setSession(session.user, session.profile, 'guest');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create guest session');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setGuestSession, setSession]);
 
   const getLinkAccountUrl = useCallback(() => {
     const baseLoginUrl = loginUrl || import.meta.env.VITE_WEB_HATCHERY_LOGIN_URL;
@@ -369,12 +318,8 @@ export function useAuth() {
     const url = new URL(baseLoginUrl, window.location.origin);
     url.searchParams.set('return_to', window.location.href);
 
-    if (user?.is_guest && user.id) {
-      url.searchParams.set('guest_user_id', String(user.id));
-    }
-
     return url.toString();
-  }, [loginUrl, user]);
+  }, [loginUrl]);
 
   return {
     user,
@@ -403,7 +348,7 @@ export function useInventory(userId?: number) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.inventory.getUserInventory(userId);
+      const data = await api.inventory.getUserInventory();
       setInventory(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load inventory');
@@ -417,7 +362,7 @@ export function useInventory(userId?: number) {
       if (!userId) return false;
 
       try {
-        const success = await api.inventory.addItem(userId, item);
+        const success = await api.inventory.addItem(item);
         if (success) {
           await loadInventory();
         }
@@ -435,7 +380,7 @@ export function useInventory(userId?: number) {
       if (!userId) return false;
 
       try {
-        const success = await api.inventory.removeItem(userId, item);
+        const success = await api.inventory.removeItem(item);
         if (success) {
           await loadInventory();
         }
@@ -475,7 +420,7 @@ export function useCrafting(userId?: number) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.crafting.getHistory(userId);
+      const data = await api.crafting.getHistory();
       setCraftingHistory(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load crafting history');

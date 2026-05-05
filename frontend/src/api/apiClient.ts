@@ -1,17 +1,15 @@
 import axios from 'axios';
 import { getActiveToken, persistLoginUrl } from '../auth/storage';
 
-// Determine the base URL from the environment or use a relative path
 const BASE_URL = import.meta.env.VITE_API_URL;
 if (!BASE_URL) {
     throw new Error('Missing required environment variable: VITE_API_URL');
 }
 
 /**
- * Standardized Web Hatchery Axios Instance
- * Automatically handles Bearer tokens and 401 Unauthorized redirects.
+ * Standardized Web Hatchery Axios instance.
  */
-export const apiClient = axios.create({
+export const axiosClient = axios.create({
     baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json',
@@ -19,10 +17,8 @@ export const apiClient = axios.create({
 });
 
 // Request Interceptor: Attach Auth Token
-apiClient.interceptors.request.use(
+axiosClient.interceptors.request.use(
     (config) => {
-        // We intentionally interact directly with localStorage here to avoid
-        // reactivity issues or circular dependencies when initializing Axios outside of React.
         try {
             const token = getActiveToken();
             if (token) {
@@ -40,12 +36,11 @@ apiClient.interceptors.request.use(
 );
 
 // Response Interceptor: Handle 401s and standardize errors
-apiClient.interceptors.response.use(
+axiosClient.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        // Intercept 401 Unauthorized and redirect to central login
         if (error.response?.status === 401) {
             const loginUrl =
                 error.response?.data?.login_url ||

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Core\Router;
 use App\Controllers\MaterialController;
 use App\Controllers\RecipeController;
@@ -22,7 +24,7 @@ return function (Router $router): void {
             'timestamp' => date('Y-m-d H:i:s'),
             'service' => 'Blacksmith Forge API',
             'version' => '1.0.0',
-            'environment' => $_ENV['APP_ENV'] ?? 'development',
+            'environment' => \App\Core\Environment::required('APP_ENV'),
             'uptime' => round(microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'], 3),
             'checks' => []
         ];
@@ -49,10 +51,12 @@ return function (Router $router): void {
             $health['status'] = 'down';
         }
 
-        $requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+        $requiredEnvVars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'WEB_HATCHERY_LOGIN_URL'];
         $missingVars = [];
         foreach ($requiredEnvVars as $var) {
-            if (!isset($_ENV[$var]) || empty($_ENV[$var])) {
+            try {
+                \App\Core\Environment::required($var, $var === 'DB_PASSWORD');
+            } catch (\RuntimeException $error) {
                 $missingVars[] = $var;
             }
         }
@@ -106,7 +110,7 @@ return function (Router $router): void {
     $router->post($api . '/materials', [MaterialController::class, 'create'], [WebHatcheryJwtMiddleware::class]);
     $router->put($api . '/materials/{id}', [MaterialController::class, 'update'], [WebHatcheryJwtMiddleware::class]);
     $router->delete($api . '/materials/{id}', [MaterialController::class, 'delete'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/materials/user/{userId}', [MaterialController::class, 'getUserMaterials'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/materials/user', [MaterialController::class, 'getUserMaterials'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/materials/purchase', [MaterialController::class, 'purchaseMaterial'], [WebHatcheryJwtMiddleware::class]);
 
     // Recipes (auth required)
@@ -122,25 +126,25 @@ return function (Router $router): void {
     $router->post($api . '/customers', [CustomerController::class, 'create'], [WebHatcheryJwtMiddleware::class]);
     $router->put($api . '/customers/{id}', [CustomerController::class, 'update'], [WebHatcheryJwtMiddleware::class]);
     $router->delete($api . '/customers/{id}', [CustomerController::class, 'delete'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/customers/current/{user_id}', [CustomerController::class, 'getCurrentCustomer'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/customers/current', [CustomerController::class, 'getCurrentCustomer'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/customers/generate', [CustomerController::class, 'generateCustomer'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/customers/sell', [CustomerController::class, 'sellItem'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/customers/price/{user_id}/{item_id}/{customer_id}', [CustomerController::class, 'getSellingPrice'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/customers/price/{item_id}/{customer_id}', [CustomerController::class, 'getSellingPrice'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/customers/dismiss', [CustomerController::class, 'dismissCustomer'], [WebHatcheryJwtMiddleware::class]);
 
     // Inventory
-    $router->get($api . '/inventory/{user_id}', [InventoryController::class, 'get'], [WebHatcheryJwtMiddleware::class]);
-    $router->post($api . '/inventory/{user_id}/add', [InventoryController::class, 'add'], [WebHatcheryJwtMiddleware::class]);
-    $router->post($api . '/inventory/{user_id}/remove', [InventoryController::class, 'remove'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/inventory', [InventoryController::class, 'get'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/inventory/add', [InventoryController::class, 'add'], [WebHatcheryJwtMiddleware::class]);
+    $router->post($api . '/inventory/remove', [InventoryController::class, 'remove'], [WebHatcheryJwtMiddleware::class]);
 
     // Crafting
     $router->post($api . '/crafting/start', [CraftingController::class, 'startCrafting'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/crafting/hammer-hit', [CraftingController::class, 'processHammerHit'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/crafting/complete', [CraftingController::class, 'completeCrafting'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/crafting/validate/{user_id}/{recipe_id}', [CraftingController::class, 'validateCrafting'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/crafting/session/{user_id}/{crafting_session_id}', [CraftingController::class, 'getCraftingSession'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/crafting/validate/{recipe_id}', [CraftingController::class, 'validateCrafting'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/crafting/session/{crafting_session_id}', [CraftingController::class, 'getCraftingSession'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/crafting/craft', [CraftingController::class, 'craft'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/crafting/history/{user_id}', [CraftingController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/crafting/history', [CraftingController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
 
     // Upgrades (auth required)
     $router->get($api . '/upgrades', [UpgradeController::class, 'getAll'], [WebHatcheryJwtMiddleware::class]);
@@ -149,9 +153,10 @@ return function (Router $router): void {
 
     // Mini-Games
     $router->post($api . '/minigames/play', [MiniGameController::class, 'play'], [WebHatcheryJwtMiddleware::class]);
-    $router->get($api . '/minigames/history/{user_id}', [MiniGameController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
+    $router->get($api . '/minigames/history', [MiniGameController::class, 'history'], [WebHatcheryJwtMiddleware::class]);
 
     // Auth endpoints
+    $router->get($api . '/auth/login-info', [AuthController::class, 'loginInfo']);
     $router->get($api . '/auth/session', [AuthController::class, 'session'], [WebHatcheryJwtMiddleware::class]);
     $router->post($api . '/auth/guest-session', [AuthController::class, 'guestSession']);
     $router->post($api . '/auth/link-guest', [AuthController::class, 'linkGuest'], [WebHatcheryJwtMiddleware::class]);

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Middleware;
 
+use App\Core\Environment;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Http\Response;
@@ -16,18 +19,18 @@ class WebHatcheryJwtMiddleware
         }
 
         $token = $matches[1];
-        $secret = $this->requiredEnv('JWT_SECRET');
+        $secret = Environment::required('JWT_SECRET');
 
         try {
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
             $isGuest = (bool) ($decoded->is_guest ?? false);
 
-            $expectedIssuer = $this->requiredEnv('JWT_ISSUER');
+            $expectedIssuer = Environment::required('JWT_ISSUER');
             if (!$isGuest && isset($decoded->iss) && $decoded->iss !== $expectedIssuer) {
                 return $this->unauthorized($response, 'Invalid token issuer');
             }
 
-            $expectedAudience = $this->requiredEnv('JWT_AUDIENCE');
+            $expectedAudience = Environment::required('JWT_AUDIENCE');
             if (!$isGuest && $expectedAudience && isset($decoded->aud)) {
                 $aud = $decoded->aud;
                 $isValidAudience = is_array($aud) ? in_array($expectedAudience, $aud, true) : $aud === $expectedAudience;
@@ -64,17 +67,8 @@ class WebHatcheryJwtMiddleware
         $response->getBody()->write(json_encode([
             'success' => false,
             'message' => $message,
-            'login_url' => $this->requiredEnv('LOGIN_URL'),
+            'login_url' => Environment::required('WEB_HATCHERY_LOGIN_URL'),
         ]));
         return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
-    }
-
-    private function requiredEnv(string $name): string
-    {
-        $value = $_ENV[$name] ?? '';
-        if ($value === '') {
-            throw new \RuntimeException("Missing required environment variable: {$name}");
-        }
-        return $value;
     }
 }

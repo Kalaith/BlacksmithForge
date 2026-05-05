@@ -1,5 +1,5 @@
 import { ApiResponse } from './backendTypes';
-import { getActiveToken, persistLoginUrl } from '../auth/storage';
+import { axiosClient } from './apiClient';
 
 const requireEnv = (name: keyof ImportMetaEnv): string => {
   const value = import.meta.env[name];
@@ -23,57 +23,29 @@ export class ApiRequestError extends Error {
   }
 }
 
-// HTTP Client
 export class ApiClient {
-  private baseURL: string;
-
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
+  constructor(private readonly baseURL: string) {
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
-
+  private async request<T>(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', data?: unknown): Promise<ApiResponse<T>> {
     try {
-      const storedToken = getActiveToken();
-
-      const mergedHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(options.headers as Record<string, string>),
-      };
-      if (storedToken && !mergedHeaders.Authorization) {
-        mergedHeaders.Authorization = `Bearer ${storedToken}`;
-      }
-
-      const response = await fetch(url, {
-        ...options,
-        headers: mergedHeaders,
+      const response = await axiosClient.request<ApiResponse<T>>({
+        url: endpoint,
+        method,
+        data,
       });
-
-      if (!response.ok) {
-        let payload: unknown = null;
-        try {
-          payload = await response.clone().json();
-        } catch {
-          payload = null;
-        }
-
-        if (response.status === 401) {
-          const loginUrl =
-            payload &&
-            typeof payload === 'object' &&
-            'login_url' in payload &&
-            typeof payload.login_url === 'string'
-              ? payload.login_url
-              : undefined;
-          if (loginUrl) {
-            persistLoginUrl(loginUrl);
-            window.dispatchEvent(
-              new CustomEvent('webhatchery:login-required', { detail: { loginUrl } })
-            );
-          }
-        }
-
+      return response.data;
+    } catch (error) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'status' in error.response
+      ) {
+        const response = error.response as { status: number; data?: unknown };
+        const payload = response.data;
         const message =
           payload &&
           typeof payload === 'object' &&
@@ -81,37 +53,26 @@ export class ApiClient {
           typeof payload.message === 'string'
             ? payload.message
             : `HTTP error! status: ${response.status}`;
-        throw new ApiRequestError(response.status, message, payload);
+        throw new ApiRequestError(response.status, message, payload ?? null);
       }
-
-      const data = (await response.json()) as ApiResponse<T>;
-      return data;
-    } catch (error) {
-      console.error('API request failed:', error);
       throw error;
     }
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.request<T>(endpoint, 'GET');
   }
 
   async post<T, TBody = unknown>(endpoint: string, data: TBody): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.request<T>(endpoint, 'POST', data);
   }
 
   async put<T, TBody = unknown>(endpoint: string, data: TBody): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    return this.request<T>(endpoint, 'PUT', data);
   }
 
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(endpoint, 'DELETE');
   }
 }
 

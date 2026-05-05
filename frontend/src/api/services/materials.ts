@@ -37,8 +37,8 @@ export const materialsAPI = {
     );
   },
 
-  async getUserMaterials(userId: number): Promise<Record<string, number>> {
-    const response = await apiClient.get<Record<string, number>>(`/materials/user/${userId}`);
+  async getUserMaterials(): Promise<Record<string, number>> {
+    const response = await apiClient.get<Record<string, number>>('/materials/user');
     return requireData(response.success, response.data, response.message);
   },
 

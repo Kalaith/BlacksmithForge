@@ -105,7 +105,7 @@ final class Router
                 try {
                     $response = $this->invokeHandler($route['handler'], $request, $response, $routeParams);
                 } catch (Throwable $e) {
-                    $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
+                    $debug = Environment::required('APP_DEBUG') === 'true';
                     $payload = [
                         'success' => false,
                         'error' => 'Internal server error'

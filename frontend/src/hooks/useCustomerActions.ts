@@ -36,7 +36,7 @@ export function useCustomerActions() {
     setCustomerState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const customer = await customersAPI.getCurrentCustomer(user.id);
+      const customer = await customersAPI.getCurrentCustomer();
       setCustomerState(prev => ({
         ...prev,
         currentCustomer: customer,
@@ -61,7 +61,7 @@ export function useCustomerActions() {
     }
 
     try {
-      const userInventory = await inventoryAPI.getUserInventory(user.id);
+      const userInventory = await inventoryAPI.getUserInventory();
       setInventory(userInventory);
     } catch (error) {
       console.error('Failed to load inventory:', error);
@@ -111,11 +111,7 @@ export function useCustomerActions() {
       if (!customerState.currentCustomer) return null;
 
       try {
-        const priceInfo = await customersAPI.getSellingPrice(
-          user.id,
-          itemId,
-          customerState.currentCustomer.id
-        );
+        const priceInfo = await customersAPI.getSellingPrice(itemId, customerState.currentCustomer.id);
         setSellingPrice(priceInfo);
         return priceInfo;
       } catch (error) {

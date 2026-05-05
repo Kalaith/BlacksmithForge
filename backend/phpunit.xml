@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
          colors="true">
     
     <testsuites>
-        <testsuite name="Route Tests">
-            <directory>tests/Routes</directory>
+        <testsuite name="Smoke Tests">
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
     
@@ -20,8 +20,9 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="DB_HOST" value="localhost"/>
-        <env name="DB_NAME" value="dragons_den"/>
+        <env name="DB_NAME" value="blacksmith_forge"/>
         <env name="DB_USER" value="root"/>
         <env name="DB_PASSWORD" value="c$t@Q5N^QRi8aa"/>
+        <env name="WEB_HATCHERY_LOGIN_URL" value="http://127.0.0.1/login"/>
     </php>
 </phpunit>
