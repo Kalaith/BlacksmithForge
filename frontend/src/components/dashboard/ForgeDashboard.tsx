@@ -1,7 +1,7 @@
 import React from 'react';
 import { useInventory } from '../../hooks/useAPI';
 import { useForge } from '../../hooks/useForge';
-import { useAuthContext, useGameDataContext } from '../../providers/GameDataProvider';
+import { useGameDataContext } from '../../providers/GameDataProvider';
 import CustomerPreviewPanel from './CustomerPreviewPanel';
 import ForgePreviewPanel from './ForgePreviewPanel';
 import InventoryPreviewPanel from './InventoryPreviewPanel';
@@ -14,9 +14,8 @@ interface ForgeDashboardProps {
 }
 
 const ForgeDashboard: React.FC<ForgeDashboardProps> = ({ onTabChange }) => {
-  const { user } = useAuthContext();
   const { customers, materials, recipes, upgrades } = useGameDataContext();
-  const { inventory, loading: inventoryLoading } = useInventory(user?.id);
+  const { inventory, loading: inventoryLoading } = useInventory();
   const { forgeLit, selectedRecipe, handleLightForge } = useForge();
 
   return (

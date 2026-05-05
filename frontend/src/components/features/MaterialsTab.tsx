@@ -9,22 +9,22 @@ interface MaterialsTabProps {
 
 const MaterialsTab: React.FC<MaterialsTabProps> = ({ active }) => {
   const { materials } = useGameDataContext();
-  const { user, profile, isAuthenticated, refreshSession } = useAuthContext();
+  const { profile, isAuthenticated, refreshSession } = useAuthContext();
   const [userMaterials, setUserMaterials] = useState<Record<string, number>>({});
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const [recentPurchase, setRecentPurchase] = useState<number | null>(null);
 
   useEffect(() => {
     const loadUserMaterials = async () => {
-      if (!isAuthenticated || !user?.id) return;
+      if (!isAuthenticated) return;
       const data = await materialsAPI.getUserMaterials();
       setUserMaterials(data);
     };
     loadUserMaterials();
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   const handlePurchase = async (materialId: number | undefined, quantity: number) => {
-    if (!materialId || !isAuthenticated || !user?.id) return;
+    if (!materialId || !isAuthenticated) return;
     const success = await materialsAPI.purchaseMaterial(materialId, quantity);
     if (success) {
       setPurchaseMessage(`Purchased ${quantity} items.`);

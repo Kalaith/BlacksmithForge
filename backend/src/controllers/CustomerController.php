@@ -9,12 +9,15 @@ use App\Http\Request;
 use App\Actions\CustomerActions;
 
 class CustomerController {
+    public function __construct(private CustomerActions $customerActions)
+    {
+    }
     
     /**
      * Get all customers
      */
     public function getAll(Request $request, Response $response, $args) {
-        $result = CustomerActions::getAll();
+        $result = $this->customerActions->getAll();
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -23,8 +26,8 @@ class CustomerController {
      * Get specific customer
      */
     public function get(Request $request, Response $response, $args) {
-        $id = $args['id'] ?? null;
-        $result = CustomerActions::get($id);
+        $id = (int) ($args['id'] ?? 0);
+        $result = $this->customerActions->get($id);
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -41,7 +44,7 @@ class CustomerController {
                 'message' => 'User ID is required'
             ];
         } else {
-            $result = CustomerActions::getCurrentCustomer($userId);
+            $result = $this->customerActions->getCurrentCustomer((int) $userId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -52,7 +55,6 @@ class CustomerController {
      * Generate new customer for a user
      */
     public function generateCustomer(Request $request, Response $response, $args) {
-        $data = $request->getParsedBody();
         $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
@@ -61,7 +63,7 @@ class CustomerController {
                 'message' => 'User ID is required'
             ];
         } else {
-            $result = CustomerActions::generateCustomer($userId);
+            $result = $this->customerActions->generateCustomer((int) $userId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -83,7 +85,7 @@ class CustomerController {
                 'message' => 'User ID, Item ID, and Customer ID are required'
             ];
         } else {
-            $result = CustomerActions::sellItem($userId, $itemId, $customerId);
+            $result = $this->customerActions->sellItem((int) $userId, (int) $itemId, (int) $customerId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -104,7 +106,7 @@ class CustomerController {
                 'message' => 'User ID, Item ID, and Customer ID are required'
             ];
         } else {
-            $result = CustomerActions::getSellingPrice($userId, $itemId, $customerId);
+            $result = $this->customerActions->getSellingPrice((int) $userId, (int) $itemId, (int) $customerId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -115,7 +117,6 @@ class CustomerController {
      * Dismiss current customer
      */
     public function dismissCustomer(Request $request, Response $response, $args) {
-        $data = $request->getParsedBody();
         $userId = $this->getAuthUserId($request);
         
         if (!$userId) {
@@ -124,7 +125,7 @@ class CustomerController {
                 'message' => 'User ID is required'
             ];
         } else {
-            $result = CustomerActions::dismissCustomer($userId);
+            $result = $this->customerActions->dismissCustomer((int) $userId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -136,27 +137,27 @@ class CustomerController {
         $authUser = $request->getAttribute('auth_user');
         return isset($authUser['id']) ? (int) $authUser['id'] : null;
     }
-    
-    // Legacy methods
     public function create(Request $request, Response $response, $args) {
-        $data = $request->getParsedBody();
-        $result = CustomerActions::create($data);
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Customer type management is not available through this game API'
+        ]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(405);
     }
     
     public function update(Request $request, Response $response, $args) {
-        $id = $args['id'] ?? null;
-        $data = $request->getParsedBody();
-        $result = CustomerActions::update($id, $data);
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Customer type management is not available through this game API'
+        ]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(405);
     }
     
     public function delete(Request $request, Response $response, $args) {
-        $id = $args['id'] ?? null;
-        $result = CustomerActions::delete($id);
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Customer type management is not available through this game API'
+        ]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(405);
     }
 }

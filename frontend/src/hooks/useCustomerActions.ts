@@ -8,7 +8,7 @@ import { SellingPriceInfo, SaleResult, CustomerState, InventoryItem } from '../t
  * Handles customer generation, selling, and price calculations on backend
  */
 export function useCustomerActions() {
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
 
   const [customerState, setCustomerState] = useState<CustomerState>({
     currentCustomer: null,
@@ -24,7 +24,7 @@ export function useCustomerActions() {
    * Load current customer for the user
    */
   const loadCurrentCustomer = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setCustomerState(prev => ({
         ...prev,
         currentCustomer: null,
@@ -49,13 +49,13 @@ export function useCustomerActions() {
         loading: false,
       }));
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   /**
    * Load user inventory
    */
   const loadInventory = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setInventory([]);
       return;
     }
@@ -66,7 +66,7 @@ export function useCustomerActions() {
     } catch (error) {
       console.error('Failed to load inventory:', error);
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   /**
    * Generate a new customer - all logic handled by backend
@@ -107,7 +107,7 @@ export function useCustomerActions() {
    */
   const getSellingPrice = useCallback(
     async (itemId: number) => {
-      if (!isAuthenticated || !user?.id) return null;
+      if (!isAuthenticated) return null;
       if (!customerState.currentCustomer) return null;
 
       try {
@@ -119,7 +119,7 @@ export function useCustomerActions() {
         return null;
       }
     },
-    [isAuthenticated, user?.id, customerState.currentCustomer]
+    [isAuthenticated, customerState.currentCustomer]
   );
 
   /**

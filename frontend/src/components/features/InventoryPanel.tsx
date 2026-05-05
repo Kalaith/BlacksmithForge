@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAuthContext } from '../../providers/GameDataProvider';
 import { useInventory } from '../../hooks/useAPI';
 
 interface InventoryItem {
@@ -12,8 +11,7 @@ interface InventoryItem {
 }
 
 const InventoryPanel: React.FC = () => {
-  const { user } = useAuthContext();
-  const { inventory, loading } = useInventory(user?.id);
+  const { inventory, loading } = useInventory();
 
   if (loading) {
     return (

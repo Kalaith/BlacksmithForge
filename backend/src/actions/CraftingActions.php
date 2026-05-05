@@ -5,152 +5,130 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Services\CraftingService;
-use App\Utils\ContainerConfig;
 
-class CraftingActions {
-    
+class CraftingActions
+{
+    public function __construct(private readonly CraftingService $craftingService)
+    {
+    }
+
     /**
-     * Start a crafting session
+     * @return array<string, mixed>
      */
-    public static function startCrafting($userId, $recipeId) {
+    public function startCrafting(int $userId, int $recipeId): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $result = $craftingService->startCrafting($userId, $recipeId);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Crafting session started successfully'
+                'data' => $this->craftingService->startCrafting($userId, $recipeId),
+                'message' => 'Crafting session started successfully',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Process hammer hit in mini-game
+     * @return array<string, mixed>
      */
-    public static function processHammerHit($userId, $craftingSessionId, $accuracy) {
+    public function processHammerHit(int $userId, int $craftingSessionId, bool $accuracy): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $result = $craftingService->processHammerHit($userId, $craftingSessionId, $accuracy);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Hammer hit processed successfully'
+                'data' => $this->craftingService->processHammerHit($userId, $craftingSessionId, $accuracy),
+                'message' => 'Hammer hit processed successfully',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Complete crafting process
+     * @return array<string, mixed>
      */
-    public static function completeCrafting($userId, $craftingSessionId, $totalAccuracy) {
+    public function completeCrafting(int $userId, int $craftingSessionId, int $totalAccuracy): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $result = $craftingService->completeCrafting($userId, $craftingSessionId, $totalAccuracy);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Crafting completed successfully'
+                'data' => $this->craftingService->completeCrafting($userId, $craftingSessionId, $totalAccuracy),
+                'message' => 'Crafting completed successfully',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Validate if user can craft a recipe
+     * @return array<string, mixed>
      */
-    public static function validateCrafting($userId, $recipeId) {
+    public function validateCrafting(int $userId, int $recipeId): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $result = $craftingService->validateCrafting($userId, $recipeId);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Crafting validation completed'
+                'data' => $this->craftingService->validateCrafting($userId, $recipeId),
+                'message' => 'Crafting validation completed',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Get crafting session status
+     * @return array<string, mixed>
      */
-    public static function getCraftingSession($userId, $craftingSessionId) {
+    public function getCraftingSession(int $userId, int $craftingSessionId): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $result = $craftingService->getCraftingSession($userId, $craftingSessionId);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Crafting session retrieved successfully'
+                'data' => $this->craftingService->getCraftingSession($userId, $craftingSessionId),
+                'message' => 'Crafting session retrieved successfully',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Legacy craft method for backward compatibility
+     * @return array<string, mixed>
      */
-    public static function craft($userId, $recipeId, $materialsUsed) {
-        // For now, redirect to the new complete crafting flow
-        $startResult = self::startCrafting($userId, $recipeId);
-        
-        if (!$startResult['success']) {
-            return $startResult;
-        }
-        
-        $sessionId = $startResult['data']['session_id'];
-        
-        // Simulate perfect accuracy for legacy calls
-        $completeResult = self::completeCrafting($userId, $sessionId, 100);
-        
-        return $completeResult;
-    }
-    
-    /**
-     * Get crafting history for a user
-     */
-    public static function history($userId) {
+    public function craft(int $userId, int $recipeId): array
+    {
         try {
-            $craftingService = ContainerConfig::createContainer()->get(CraftingService::class);
-            $history = $craftingService->getCraftingHistory($userId);
-            
+            return $this->craftingService->craft($userId, $recipeId);
+        } catch (\Exception $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function history(int $userId): array
+    {
+        try {
+            $history = $this->craftingService->getCraftingHistory($userId);
             return [
                 'success' => true,
                 'data' => $history,
-                'count' => count($history)
+                'count' => count($history),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function failure(\Exception $e): array
+    {
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+        ];
     }
 }

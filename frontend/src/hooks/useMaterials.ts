@@ -16,7 +16,7 @@ import { inventoryUtils } from '../utils/inventoryUtils';
  * Fetches material quantities from backend API
  */
 export function useMaterials() {
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
 
   const [state, setState] = useState<MaterialsState>({
     materials: {},
@@ -28,7 +28,7 @@ export function useMaterials() {
    * Fetch materials from backend
    */
   const fetchMaterials = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setState(prev => ({ ...prev, materials: {}, loading: false }));
       return;
     }
@@ -49,14 +49,14 @@ export function useMaterials() {
         error: error instanceof Error ? error.message : 'Failed to fetch materials',
       }));
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   /**
    * Purchase materials - delegates to backend
    */
   const purchaseMaterial = useCallback(
     async (materialId: number, quantity: number) => {
-      if (!isAuthenticated || !user?.id) {
+      if (!isAuthenticated) {
         setState(prev => ({
           ...prev,
           error: 'You must be logged in to purchase materials',
@@ -76,7 +76,7 @@ export function useMaterials() {
         return false;
       }
     },
-    [isAuthenticated, user?.id, fetchMaterials]
+    [isAuthenticated, fetchMaterials]
   );
 
   /**
@@ -106,7 +106,7 @@ export function useMaterials() {
  * Fetches inventory items from backend API with filtering and sorting
  */
 export function useInventory(): UseInventoryReturn {
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
 
   const [state, setState] = useState<InventoryState>({
     items: [],
@@ -127,7 +127,7 @@ export function useInventory(): UseInventoryReturn {
    * Fetch inventory from backend
    */
   const fetchInventory = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setState(prev => ({ ...prev, items: [], loading: false }));
       return;
     }
@@ -153,14 +153,14 @@ export function useInventory(): UseInventoryReturn {
         error: error instanceof Error ? error.message : 'Failed to fetch inventory',
       }));
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   /**
    * Remove item from inventory - delegates to backend
    */
   const removeItem = useCallback(
     async (item: InventoryItem) => {
-      if (!isAuthenticated || !user?.id) {
+      if (!isAuthenticated) {
         setState(prev => ({
           ...prev,
           error: 'You must be logged in to remove items',
@@ -180,7 +180,7 @@ export function useInventory(): UseInventoryReturn {
         return false;
       }
     },
-    [isAuthenticated, user?.id, fetchInventory]
+    [isAuthenticated, fetchInventory]
   );
 
   /**

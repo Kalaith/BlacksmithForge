@@ -6,17 +6,24 @@ namespace App\Controllers;
 
 use App\Http\Response;
 use App\Http\Request;
+use App\Actions\UpgradeActions;
 
 class UpgradeController {
+    public function __construct(private UpgradeActions $upgradeActions)
+    {
+    }
+
     public function getAll(Request $request, Response $response, $args) {
-        $result = \App\Actions\UpgradeActions::getAll();
+        $result = $this->upgradeActions->getAll();
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
     public function getPurchased(Request $request, Response $response, $args) {
         $userId = $this->getAuthUserId($request);
-        $result = \App\Actions\UpgradeActions::getPurchased($userId);
+        $result = $userId
+            ? $this->upgradeActions->getPurchased((int) $userId)
+            : ['success' => false, 'message' => 'User ID is required'];
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -24,7 +31,9 @@ class UpgradeController {
         $data = $request->getParsedBody();
         $userId = $this->getAuthUserId($request);
         $upgradeId = $data['upgrade_id'] ?? null;
-        $result = \App\Actions\UpgradeActions::purchase($userId, $upgradeId);
+        $result = $userId && $upgradeId
+            ? $this->upgradeActions->purchase((int) $userId, (int) $upgradeId)
+            : ['success' => false, 'message' => 'User ID and Upgrade ID are required'];
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }

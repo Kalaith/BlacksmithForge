@@ -9,6 +9,9 @@ use App\Http\Request;
 use App\Actions\CraftingActions;
 
 class CraftingController {
+    public function __construct(private CraftingActions $craftingActions)
+    {
+    }
     
     /**
      * Start a new crafting session
@@ -24,7 +27,7 @@ class CraftingController {
                 'message' => 'User ID and Recipe ID are required'
             ];
         } else {
-            $result = CraftingActions::startCrafting($userId, $recipeId);
+            $result = $this->craftingActions->startCrafting((int) $userId, (int) $recipeId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -46,7 +49,7 @@ class CraftingController {
                 'message' => 'User ID and Crafting Session ID are required'
             ];
         } else {
-            $result = CraftingActions::processHammerHit($userId, $craftingSessionId, $accuracy);
+            $result = $this->craftingActions->processHammerHit((int) $userId, (int) $craftingSessionId, (bool) $accuracy);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -68,7 +71,7 @@ class CraftingController {
                 'message' => 'User ID and Crafting Session ID are required'
             ];
         } else {
-            $result = CraftingActions::completeCrafting($userId, $craftingSessionId, $totalAccuracy);
+            $result = $this->craftingActions->completeCrafting((int) $userId, (int) $craftingSessionId, (int) $totalAccuracy);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -88,7 +91,7 @@ class CraftingController {
                 'message' => 'User ID and Recipe ID are required'
             ];
         } else {
-            $result = CraftingActions::validateCrafting($userId, $recipeId);
+            $result = $this->craftingActions->validateCrafting((int) $userId, (int) $recipeId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -108,7 +111,7 @@ class CraftingController {
                 'message' => 'User ID and Crafting Session ID are required'
             ];
         } else {
-            $result = CraftingActions::getCraftingSession($userId, $craftingSessionId);
+            $result = $this->craftingActions->getCraftingSession((int) $userId, (int) $craftingSessionId);
         }
         
         $response->getBody()->write(json_encode($result));
@@ -122,9 +125,14 @@ class CraftingController {
         $data = $request->getParsedBody();
         $userId = $this->getAuthUserId($request);
         $recipeId = $data['recipe_id'] ?? null;
-        $materialsUsed = $data['materials_used'] ?? [];
-        
-        $result = CraftingActions::craft($userId, $recipeId, $materialsUsed);
+        if (!$userId || !$recipeId) {
+            $result = [
+                'success' => false,
+                'message' => 'User ID and Recipe ID are required'
+            ];
+        } else {
+            $result = $this->craftingActions->craft((int) $userId, (int) $recipeId);
+        }
         $response->getBody()->write(json_encode($result));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -141,7 +149,7 @@ class CraftingController {
                 'message' => 'User ID is required'
             ];
         } else {
-            $result = CraftingActions::history($userId);
+            $result = $this->craftingActions->history((int) $userId);
         }
         
         $response->getBody()->write(json_encode($result));

@@ -5,53 +5,67 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Services\UpgradeService;
-use App\Utils\ContainerConfig;
 
-class UpgradeActions {
-    public static function getAll() {
+class UpgradeActions
+{
+    public function __construct(private readonly UpgradeService $upgradeService)
+    {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getAll(): array
+    {
         try {
-            $upgradeService = ContainerConfig::createContainer()->get(UpgradeService::class);
-            $upgrades = $upgradeService->getAllUpgrades();
+            $upgrades = $this->upgradeService->getAllUpgrades();
             return [
                 'success' => true,
                 'data' => $upgrades,
-                'count' => count($upgrades)
+                'count' => count($upgrades),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
 
-    public static function purchase($userId, $upgradeId) {
+    /**
+     * @return array<string, mixed>
+     */
+    public function purchase(int $userId, int $upgradeId): array
+    {
         try {
-            $upgradeService = ContainerConfig::createContainer()->get(UpgradeService::class);
-            $result = $upgradeService->purchaseUpgrade((int) $userId, (int) $upgradeId);
-            return $result;
+            return $this->upgradeService->purchaseUpgrade($userId, $upgradeId);
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
 
-    public static function getPurchased($userId) {
+    /**
+     * @return array<string, mixed>
+     */
+    public function getPurchased(int $userId): array
+    {
         try {
-            $upgradeService = ContainerConfig::createContainer()->get(UpgradeService::class);
-            $upgradeIds = $upgradeService->getUserUpgradeIds((int) $userId);
+            $upgradeIds = $this->upgradeService->getUserUpgradeIds($userId);
             return [
                 'success' => true,
                 'data' => $upgradeIds,
-                'count' => count($upgradeIds)
+                'count' => count($upgradeIds),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function failure(\Exception $e): array
+    {
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+        ];
     }
 }

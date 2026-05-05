@@ -5,177 +5,131 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Services\CustomerService;
-use App\Utils\ContainerConfig;
 
-class CustomerActions {
-    
+class CustomerActions
+{
+    public function __construct(private readonly CustomerService $customerService)
+    {
+    }
+
     /**
-     * Get all available customers
+     * @return array<string, mixed>
      */
-    public static function getAll() {
+    public function getAll(): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $customers = $customerService->getAllCustomers();
-            
+            $customers = $this->customerService->getAllCustomers();
             return [
                 'success' => true,
                 'data' => $customers,
-                'count' => count($customers)
+                'count' => count($customers),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Get specific customer by ID
+     * @return array<string, mixed>
      */
-    public static function get($id) {
+    public function get(int $id): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $customer = $customerService->getCustomerById($id);
-            
             return [
                 'success' => true,
-                'data' => $customer
+                'data' => $this->customerService->getCustomerById($id),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Get current customer for a user (if any)
+     * @return array<string, mixed>
      */
-    public static function getCurrentCustomer($userId) {
+    public function getCurrentCustomer(int $userId): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $customer = $customerService->getCurrentCustomerForUser($userId);
-            
             return [
                 'success' => true,
-                'data' => $customer
+                'data' => $this->customerService->getCurrentCustomerForUser($userId),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Generate a new customer for a user
+     * @return array<string, mixed>
      */
-    public static function generateCustomer($userId) {
+    public function generateCustomer(int $userId): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $customer = $customerService->generateCustomerForUser($userId);
-            
             return [
                 'success' => true,
-                'data' => $customer,
-                'message' => 'New customer generated'
+                'data' => $this->customerService->generateCustomerForUser($userId),
+                'message' => 'New customer generated',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Sell an item to a customer
+     * @return array<string, mixed>
      */
-    public static function sellItem($userId, $itemId, $customerId) {
+    public function sellItem(int $userId, int $itemId, int $customerId): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $result = $customerService->sellItemToCustomer($userId, $itemId, $customerId);
-            
             return [
                 'success' => true,
-                'data' => $result,
-                'message' => 'Item sold successfully'
+                'data' => $this->customerService->sellItemToCustomer($userId, $itemId, $customerId),
+                'message' => 'Item sold successfully',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Get selling price for an item with customer preferences
+     * @return array<string, mixed>
      */
-    public static function getSellingPrice($userId, $itemId, $customerId) {
+    public function getSellingPrice(int $userId, int $itemId, int $customerId): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $priceInfo = $customerService->calculateSellingPrice($userId, $itemId, $customerId);
-            
             return [
                 'success' => true,
-                'data' => $priceInfo
+                'data' => $this->customerService->calculateSellingPrice($userId, $itemId, $customerId),
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
+
     /**
-     * Dismiss current customer
+     * @return array<string, mixed>
      */
-    public static function dismissCustomer($userId) {
+    public function dismissCustomer(int $userId): array
+    {
         try {
-            $customerService = ContainerConfig::createContainer()->get(CustomerService::class);
-            $customerService->dismissCurrentCustomer($userId);
-            
+            $this->customerService->dismissCurrentCustomer($userId);
             return [
                 'success' => true,
-                'message' => 'Customer dismissed'
+                'message' => 'Customer dismissed',
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            return $this->failure($e);
         }
     }
-    
-    // Legacy methods for backward compatibility
-    public static function create($data) {
-        $customer = new \App\Models\Customer(
-            $data['name'] ?? '',
-            $data['budget'] ?? 0,
-            $data['preferences'] ?? '',
-            $data['reputation'] ?? 0,
-            $data['icon'] ?? ''
-        );
-        return ["created" => true, "customer" => $customer];
-    }
-    
-    public static function update($id, $data) {
-        $customer = new \App\Models\Customer(
-            $data['name'] ?? '',
-            $data['budget'] ?? 0,
-            $data['preferences'] ?? '',
-            $data['reputation'] ?? 0,
-            $data['icon'] ?? ''
-        );
-        return ["updated" => true, "customer" => $customer];
-    }
-    
-    public static function delete($id) {
-        return ["deleted" => true];
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function failure(\Exception $e): array
+    {
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+        ];
     }
 }

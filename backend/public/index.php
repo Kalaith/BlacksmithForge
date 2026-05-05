@@ -17,9 +17,19 @@ $localAutoloader = function (string $class): void {
 };
 spl_autoload_register($localAutoloader, true, true);
 
-$centralAutoload = __DIR__ . '/../../../vendor/autoload.php';
-if (!file_exists($centralAutoload)) {
-    throw new \RuntimeException('Central vendor autoload not found at ' . $centralAutoload);
+$centralAutoloadCandidates = [
+    __DIR__ . '/../../../vendor/autoload.php',
+    __DIR__ . '/../../../../vendor/autoload.php',
+];
+$centralAutoload = null;
+foreach ($centralAutoloadCandidates as $candidate) {
+    if (file_exists($candidate)) {
+        $centralAutoload = $candidate;
+        break;
+    }
+}
+if ($centralAutoload === null) {
+    throw new \RuntimeException('Central vendor autoload not found.');
 }
 $loader = require $centralAutoload;
 $loader->setPsr4('App\\', [__DIR__ . '/../src/']);

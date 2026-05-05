@@ -18,8 +18,6 @@ interface AuthContextType {
   profile: AuthProfile | null;
   loading: boolean;
   error: string | null;
-  register: (username: string, password: string) => Promise<unknown>;
-  login: (username: string, password: string) => Promise<unknown>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   continueAsGuest: () => Promise<void>;

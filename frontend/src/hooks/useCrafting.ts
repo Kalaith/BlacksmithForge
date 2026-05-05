@@ -16,7 +16,7 @@ const maxHammerClicksDefault = 4;
  * This hook is purely for state management and API communication
  */
 export function useCrafting(selectedRecipeName: string | null) {
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const { recipes, loading: dataLoading } = useGameDataContext();
 
   // Local state for UI only
@@ -56,20 +56,20 @@ export function useCrafting(selectedRecipeName: string | null) {
    * Load user inventory - simple state fetch
    */
   const loadUserData = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) return;
+    if (!isAuthenticated) return;
 
     try {
       await inventoryAPI.getUserInventory();
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
-  }, [user?.id, isAuthenticated]);
+  }, [isAuthenticated]);
 
   /**
    * Validate crafting ability with backend
    */
   const validateCrafting = useCallback(async () => {
-    if (!isAuthenticated || !user?.id || !recipeId) return;
+    if (!isAuthenticated || !recipeId) return;
 
     try {
       const validationResult = await craftingAPI.validateCrafting(recipeId);
@@ -78,13 +78,13 @@ export function useCrafting(selectedRecipeName: string | null) {
       console.error('Failed to validate crafting:', error);
       setValidation(null);
     }
-  }, [user?.id, recipeId, isAuthenticated]);
+  }, [recipeId, isAuthenticated]);
 
   /**
    * Start crafting session - all business logic handled by backend
    */
   const handleStartCrafting = useCallback(async () => {
-    if (!isAuthenticated || !user?.id || !recipeId || !validation?.can_craft) return;
+    if (!isAuthenticated || !recipeId || !validation?.can_craft) return;
 
     setCraftingState(prev => ({
       ...prev,
@@ -118,14 +118,14 @@ export function useCrafting(selectedRecipeName: string | null) {
         craftingStarted: false,
       });
     }
-  }, [user?.id, recipeId, validation?.can_craft, isAuthenticated, setCraftingPartial]);
+  }, [recipeId, validation?.can_craft, isAuthenticated, setCraftingPartial]);
 
   /**
    * Complete crafting - all quality calculation and rewards handled by backend
    */
   const handleCompleteCrafting = useCallback(
     async (totalAccuracy: number) => {
-      if (!craftingState.sessionId || !isAuthenticated || !user?.id) return;
+      if (!craftingState.sessionId || !isAuthenticated) return;
 
       setCraftingPartial({ loading: true });
 
@@ -156,7 +156,6 @@ export function useCrafting(selectedRecipeName: string | null) {
     [
       craftingState.sessionId,
       isAuthenticated,
-      user?.id,
       loadUserData,
       validateCrafting,
       setCraftingPartial,
@@ -184,7 +183,7 @@ export function useCrafting(selectedRecipeName: string | null) {
    * Handle hammer hit - business logic on backend
    */
   const handleHammer = useCallback(async () => {
-    if (!craftingState.craftingStarted || !craftingState.sessionId || !isAuthenticated || !user?.id)
+    if (!craftingState.craftingStarted || !craftingState.sessionId || !isAuthenticated)
       return;
 
     try {
@@ -216,7 +215,6 @@ export function useCrafting(selectedRecipeName: string | null) {
     craftingState.craftingStarted,
     craftingState.sessionId,
     craftingState.maxHammerClicks,
-    user?.id,
     isAuthenticated,
     setCraftingPartial,
     handleCompleteCrafting,
@@ -225,17 +223,17 @@ export function useCrafting(selectedRecipeName: string | null) {
 
   // Load data when dependencies change
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
+    if (isAuthenticated) {
       loadUserData();
     }
-  }, [isAuthenticated, user?.id, loadUserData]);
+  }, [isAuthenticated, loadUserData]);
 
   // Validate crafting when recipe or user changes
   useEffect(() => {
-    if (isAuthenticated && user?.id && recipeId) {
+    if (isAuthenticated && recipeId) {
       validateCrafting();
     }
-  }, [isAuthenticated, user?.id, recipeId, validateCrafting]);
+  }, [isAuthenticated, recipeId, validateCrafting]);
 
   return {
     // Recipe and validation data

@@ -9,18 +9,18 @@ interface RecipesTabProps {
 
 const RecipesTab: React.FC<RecipesTabProps> = ({ active }) => {
   const { recipes } = useGameDataContext();
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const [userMaterials, setUserMaterials] = useState<Record<string, number>>({});
   const [craftMessage, setCraftMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserMaterials = async () => {
-      if (!isAuthenticated || !user?.id) return;
+      if (!isAuthenticated) return;
       const data = await materialsAPI.getUserMaterials();
       setUserMaterials(data);
     };
     loadUserMaterials();
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   if (!active) return null;
 

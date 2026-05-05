@@ -8,7 +8,7 @@ import { ForgeState, Recipe } from '../types';
  * Handles forge state and recipe selection with backend-driven logic
  */
 export function useForge() {
-  const { user, isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const { recipes, loading: dataLoading } = useGameDataContext();
 
   const [forgeState, setForgeState] = useState<ForgeState>({
@@ -48,7 +48,7 @@ export function useForge() {
    * Validate recipes with backend - checks materials and requirements
    */
   const validateRecipes = useCallback(async () => {
-    if (!isAuthenticated || !user?.id || recipesWithIds.length === 0) {
+    if (!isAuthenticated || recipesWithIds.length === 0) {
       setRecipeValidation({});
       setForgePartial({ availableRecipes: [], loading: false });
       return;
@@ -90,7 +90,7 @@ export function useForge() {
         error: error instanceof Error ? error.message : 'Failed to validate recipes',
       });
     }
-  }, [isAuthenticated, user?.id, recipesWithIds, setForgePartial]);
+  }, [isAuthenticated, recipesWithIds, setForgePartial]);
 
   /**
    * Get crafting ability for a specific recipe - uses backend validation

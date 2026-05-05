@@ -183,32 +183,6 @@ export function useAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const register = useCallback(async (_username: string, _password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      throw new Error('Registration is handled by WebHatchery login.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration not available');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = useCallback(async (_username: string, _password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      throw new Error('Login is handled by WebHatchery.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login not available');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const logout = useCallback(async () => {
     setLoading(true);
     try {
@@ -326,8 +300,6 @@ export function useAuth() {
     profile,
     loading,
     error,
-    register,
-    login,
     logout,
     refreshSession: loadSession,
     continueAsGuest,
@@ -337,13 +309,14 @@ export function useAuth() {
   };
 }
 
-export function useInventory(userId?: number) {
+export function useInventory() {
+  const isAuthenticated = useAuthStore(state => state.user !== null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadInventory = useCallback(async () => {
-    if (!userId) return;
+    if (!isAuthenticated) return;
 
     setLoading(true);
     setError(null);
@@ -355,11 +328,11 @@ export function useInventory(userId?: number) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [isAuthenticated]);
 
   const addItem = useCallback(
     async (item: InventoryItem) => {
-      if (!userId) return false;
+      if (!isAuthenticated) return false;
 
       try {
         const success = await api.inventory.addItem(item);
@@ -372,12 +345,12 @@ export function useInventory(userId?: number) {
         return false;
       }
     },
-    [userId, loadInventory]
+    [isAuthenticated, loadInventory]
   );
 
   const removeItem = useCallback(
     async (item: InventoryItem) => {
-      if (!userId) return false;
+      if (!isAuthenticated) return false;
 
       try {
         const success = await api.inventory.removeItem(item);
@@ -390,14 +363,14 @@ export function useInventory(userId?: number) {
         return false;
       }
     },
-    [userId, loadInventory]
+    [isAuthenticated, loadInventory]
   );
 
   useEffect(() => {
-    if (userId) {
+    if (isAuthenticated) {
       loadInventory();
     }
-  }, [userId, loadInventory]);
+  }, [isAuthenticated, loadInventory]);
 
   return {
     inventory,
@@ -409,13 +382,14 @@ export function useInventory(userId?: number) {
   };
 }
 
-export function useCrafting(userId?: number) {
+export function useCrafting() {
+  const isAuthenticated = useAuthStore(state => state.user !== null);
   const [craftingHistory, setCraftingHistory] = useState<CraftingHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
-    if (!userId) return;
+    if (!isAuthenticated) return;
 
     setLoading(true);
     setError(null);
@@ -427,11 +401,11 @@ export function useCrafting(userId?: number) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [isAuthenticated]);
 
   const craft = useCallback(
     async (recipeId: number, materials: CraftingMaterialsPayload) => {
-      if (!userId) return null;
+      if (!isAuthenticated) return null;
 
       setLoading(true);
       setError(null);
@@ -448,14 +422,14 @@ export function useCrafting(userId?: number) {
         setLoading(false);
       }
     },
-    [userId, loadHistory]
+    [isAuthenticated, loadHistory]
   );
 
   useEffect(() => {
-    if (userId) {
+    if (isAuthenticated) {
       loadHistory();
     }
-  }, [userId, loadHistory]);
+  }, [isAuthenticated, loadHistory]);
 
   return {
     craftingHistory,

@@ -19,6 +19,9 @@ use App\Repositories\MiniGameRepository;
 use App\Repositories\GameConfigRepository;
 use App\Repositories\GuestAccountRepository;
 use App\Actions\LinkGuestAccountAction;
+use App\Actions\CraftingActions;
+use App\Actions\CustomerActions;
+use App\Actions\UpgradeActions;
 use App\Services\MaterialService;
 use App\Services\RecipeService;
 use App\Services\CustomerService;
@@ -163,6 +166,18 @@ class ContainerConfig
             GameConfigService::class => function (GameConfigRepository $repo, LoggerInterface $logger) {
                 return new GameConfigService($repo, $logger);
             },
+
+            CraftingActions::class => function (CraftingService $craftingService) {
+                return new CraftingActions($craftingService);
+            },
+
+            CustomerActions::class => function (CustomerService $customerService) {
+                return new CustomerActions($customerService);
+            },
+
+            UpgradeActions::class => function (UpgradeService $upgradeService) {
+                return new UpgradeActions($upgradeService);
+            },
             
             // Controllers
             \App\Controllers\AuthController::class => function (
@@ -182,6 +197,18 @@ class ContainerConfig
                 InventoryRepository $inventoryRepo
             ) {
                 return new \App\Controllers\InventoryController($inventoryService, $inventoryRepo);
+            },
+
+            \App\Controllers\CraftingController::class => function (CraftingActions $craftingActions) {
+                return new \App\Controllers\CraftingController($craftingActions);
+            },
+
+            \App\Controllers\CustomerController::class => function (CustomerActions $customerActions) {
+                return new \App\Controllers\CustomerController($customerActions);
+            },
+
+            \App\Controllers\UpgradeController::class => function (UpgradeActions $upgradeActions) {
+                return new \App\Controllers\UpgradeController($upgradeActions);
             },
         ]);
         
