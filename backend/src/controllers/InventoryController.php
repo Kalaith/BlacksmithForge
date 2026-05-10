@@ -36,44 +36,11 @@ class InventoryController {
     }
 
     public function add(Request $request, Response $response, $args) {
-        $userId = $this->getAuthUserId($request);
-        if (!$userId) {
-            return $this->unauthorized($response);
-        }
-
-        $data = $request->getParsedBody();
-        if (!$data || !is_array($data)) {
-            return $this->badRequest($response, 'Invalid item data');
-        }
-
-        $itemId = $this->inventoryRepository->addItem($userId, $data);
-        $payload = [
-            'success' => true,
-            'data' => ['item_id' => $itemId]
-        ];
-        $response->getBody()->write(json_encode($payload));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $this->disabledMutation($response);
     }
 
     public function remove(Request $request, Response $response, $args) {
-        $userId = $this->getAuthUserId($request);
-        if (!$userId) {
-            return $this->unauthorized($response);
-        }
-
-        $data = $request->getParsedBody();
-        $itemId = $data['item_id'] ?? null;
-        if (!$itemId) {
-            return $this->badRequest($response, 'Item ID is required');
-        }
-
-        $removed = $this->inventoryRepository->removeItem($userId, $itemId);
-        $payload = [
-            'success' => $removed,
-            'message' => $removed ? 'Item removed' : 'Item not found'
-        ];
-        $response->getBody()->write(json_encode($payload));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $this->disabledMutation($response);
     }
 
     private function getAuthUserId(Request $request): ?int
@@ -98,5 +65,15 @@ class InventoryController {
             'message' => $message,
         ]));
         return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    private function disabledMutation(Response $response): Response
+    {
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Direct inventory mutation is not available through this game API',
+        ]));
+
+        return $response->withStatus(405)->withHeader('Content-Type', 'application/json');
     }
 }

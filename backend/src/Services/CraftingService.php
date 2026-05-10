@@ -170,11 +170,16 @@ class CraftingService
     /**
      * Complete the crafting process
      */
-    public function completeCrafting(int $userId, int $sessionId, int $totalAccuracy): array
+    public function completeCrafting(int $userId, int $sessionId, int $reportedAccuracy): array
     {
         try {
             $session = $this->getSessionOrFail($userId, $sessionId);
             $recipe = $this->getRecipeOrFail($session['recipe_id']);
+            $totalAccuracy = (int) $session['total_accuracy'];
+            $hammerClicks = (int) $session['hammer_clicks'];
+            if ($hammerClicks < $this->getMaxHammerClicks()) {
+                throw new \RuntimeException('Crafting cannot be completed before all hammer hits are processed');
+            }
 
             // Determine quality based on accuracy
             $quality = $this->calculateQuality($totalAccuracy);
@@ -228,6 +233,7 @@ class CraftingService
             $this->logger->error("Failed to complete crafting", [
                 'session_id' => $sessionId,
                 'user_id' => $userId,
+                'reported_accuracy' => $reportedAccuracy,
                 'error' => $e->getMessage()
             ]);
             throw $e;
@@ -473,7 +479,11 @@ class CraftingService
             $startResult = $this->startCrafting($userId, $recipeId);
             $sessionId = $startResult['session_id'];
 
-            // Simulate perfect crafting (100% accuracy)
+            // Simulate perfect crafting through the same server-side hit accounting as interactive crafting.
+            for ($hit = 0; $hit < $this->getMaxHammerClicks(); $hit++) {
+                $this->processHammerHit($userId, $sessionId, true);
+            }
+
             $completeResult = $this->completeCrafting($userId, $sessionId, 100);
 
             return [

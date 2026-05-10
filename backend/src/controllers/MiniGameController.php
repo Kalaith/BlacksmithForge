@@ -12,21 +12,12 @@ class MiniGameController {
     public function __construct(private MiniGameService $miniGameService) {}
 
     public function play(Request $request, Response $response, $args) {
-        $data = $request->getParsedBody();
-        $userId = $this->getAuthUserId($request);
-        if (!$userId) {
-            return $this->unauthorized($response);
-        }
+        $response->getBody()->write(json_encode([
+            'success' => false,
+            'message' => 'Client-submitted mini-game scores are not available through this game API',
+        ]));
 
-        $gameType = $data['gameType'] ?? $data['game_type'] ?? 'unknown';
-        $score = $data['score'] ?? null;
-        $result = $this->miniGameService->playGame($userId, $gameType, [
-            'score' => $score,
-            'result' => $data['result'] ?? null
-        ]);
-
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $response->withStatus(405)->withHeader('Content-Type', 'application/json');
     }
 
     public function history(Request $request, Response $response, $args) {

@@ -8,14 +8,12 @@ export const inventoryAPI = {
   },
 
   async addItem(item: InventoryItem): Promise<boolean> {
-    const response = await apiClient.post<{ item_id: number | string }>('/inventory/add', item);
-    return response.success;
+    void item;
+    throw new Error('Direct inventory mutation is disabled. Use crafting, purchasing, or selling actions.');
   },
 
   async removeItem(item: InventoryItem): Promise<boolean> {
-    const response = await apiClient.post<unknown>('/inventory/remove', {
-      item_id: item.id,
-    });
-    return response.success;
+    void item;
+    throw new Error('Direct inventory mutation is disabled. Use crafting, purchasing, or selling actions.');
   },
 };

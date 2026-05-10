@@ -69,6 +69,20 @@ foreach (['{user_id}', '{userId}'] as $forbiddenRouteToken) {
     }
 }
 
+foreach (["/inventory/add", "/inventory/remove", "/minigames/play"] as $forbiddenClientMutationRoute) {
+    if (str_contains($routes, $forbiddenClientMutationRoute)) {
+        fwrite(STDERR, "Direct client mutation route found: {$forbiddenClientMutationRoute}\n");
+        exit(1);
+    }
+}
+
+foreach (["'/materials', [MaterialController::class, 'create'], \$admin", "'/recipes', [RecipeController::class, 'create'], \$admin"] as $requiredAdminRoute) {
+    if (!str_contains($routes, $requiredAdminRoute)) {
+        fwrite(STDERR, "Shared catalog write route is not admin-gated: {$requiredAdminRoute}\n");
+        exit(1);
+    }
+}
+
 $linkGuestAction = file_get_contents($root . '/src/actions/LinkGuestAccountAction.php');
 if ($linkGuestAction === false) {
     fwrite(STDERR, "Unable to read LinkGuestAccountAction.php.\n");
@@ -145,6 +159,33 @@ if (!$authenticated instanceof \App\Http\Request) {
 $authUser = $authenticated->getAttribute('auth_user');
 if (!is_array($authUser) || ($authUser['id'] ?? null) !== 42 || ($authUser['is_guest'] ?? null) !== true) {
     fwrite(STDERR, "Authenticated request did not carry expected auth_user attributes.\n");
+    exit(1);
+}
+
+$adminMiddleware = new \App\Middleware\AdminRoleMiddleware();
+$guestRequest = (new \App\Http\Request([], [], [], [], 'POST', '/api/v1/materials'))
+    ->withAttribute('auth_user', [
+        'id' => 42,
+        'role' => 'guest',
+        'roles' => ['guest'],
+        'is_guest' => true,
+    ]);
+$forbidden = $adminMiddleware($guestRequest, new \App\Http\Response());
+if (!$forbidden instanceof \App\Http\Response || $forbidden->getStatusCode() !== 403) {
+    fwrite(STDERR, "Guest catalog write did not return 403.\n");
+    exit(1);
+}
+
+$adminRequest = (new \App\Http\Request([], [], [], [], 'POST', '/api/v1/materials'))
+    ->withAttribute('auth_user', [
+        'id' => 1,
+        'role' => 'admin',
+        'roles' => ['admin'],
+        'is_guest' => false,
+    ]);
+$allowed = $adminMiddleware($adminRequest, new \App\Http\Response());
+if (!$allowed instanceof \App\Http\Request) {
+    fwrite(STDERR, "Admin catalog write did not continue the request.\n");
     exit(1);
 }
 

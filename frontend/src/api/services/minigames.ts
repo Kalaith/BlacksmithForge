@@ -4,6 +4,6 @@ export const miniGamesAPI = {
   },
 
   async submitScore(_gameId: string, _score: number): Promise<{ success: boolean }> {
-    return { success: true };
+    throw new Error('Client-submitted mini-game scores are disabled.');
   },
 };
